@@ -7,7 +7,7 @@ import math
 import itertools
 
 class Player:
-    def __init__(self, name: str, skill_group: str, z_score: float = 1000.0, 
+    def __init__(self, name: str, skill_group: str, z_score: float = 100.0, 
                 sigma: float = 100.0, last_played: Optional[date] = None):
         self.name = name
         self.skill_group = skill_group  # A-F where A is best
@@ -37,7 +37,7 @@ class Player:
             'E': 40.0,
             'F': 0.0
         }
-        return skill_map.get(self.skill_group, 1000.0)
+        return skill_map.get(self.skill_group, 100.0)
 
     def effective_rating(self) -> float:
         """Conservative rating estimate (rating - 2*sigma)"""
@@ -269,7 +269,7 @@ class VolleyballMatchmaker:
                     elif row:
                         # Add new player if they don't exist
                         name = row[0]
-                        new_player = Player(name, 'C', 1000.0, 100.0, date.today())
+                        new_player = Player(name, 'C', 100.0, 100.0, date.today())
                         self.players[name] = new_player
                         self.attending_players.append(new_player)
         except FileNotFoundError:
