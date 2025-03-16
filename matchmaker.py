@@ -608,28 +608,34 @@ class VolleyballMatchmaker:
         total_players = len(available_players)
         
         # Determine how many teams to create
-        max_possible_teams = total_players // team_size
-        
-        if max_possible_teams == 0:
-            print(f"Error: Not enough players to create a team of size {team_size}")
-            return []
-        
-        # Use specified number of teams if provided and valid
         if num_teams is not None:
-            if num_teams > max_possible_teams:
-                print(f"Warning: Can only create {max_possible_teams} teams with {team_size} players each")
-                num_teams = max_possible_teams
+            # User specified number of teams
+            if num_teams < 2:
+                print("Need at least 2 teams")
+                return []
         else:
-            num_teams = max_possible_teams
+            # Calculate optimal number of teams to include everyone
+            # Prefer teams of size [team_size] or [team_size-1]
+            num_teams = (total_players + team_size - 1) // team_size  # Ceiling division
+            
+        # Make sure we have enough players for the requested number of teams
+        min_players_needed = num_teams * (team_size - 1)  # Allow teams to be 1 player smaller
+        if total_players < min_players_needed:
+            print(f"Warning: Not enough players for {num_teams} teams with at least {team_size-1} players each")
+            # Reduce number of teams if necessary
+            num_teams = max(2, total_players // (team_size - 1))
+            print(f"Creating {num_teams} teams instead")
         
-        print(f"Creating {num_teams} teams with {team_size} players each")
+        print(f"Creating {num_teams} teams with approximately {total_players // num_teams} players each")
         
-        # Calculate how many players will be used/unused
-        players_needed = num_teams * team_size
-        unused_players = total_players - players_needed
+        # Calculate player distribution
+        base_size = total_players // num_teams  # Minimum players per team
+        extra_players = total_players % num_teams  # Teams that get an extra player
         
-        if unused_players > 0:
-            print(f"Note: {unused_players} players will be reserves")
+        if base_size < team_size - 1:
+            print(f"Note: Teams will have {base_size} players each")
+        elif extra_players > 0:
+            print(f"Note: {extra_players} teams will have {base_size + 1} players, the rest will have {base_size}")
         
         # Optimization approach to create balanced teams
         best_teams = None
@@ -639,13 +645,18 @@ class VolleyballMatchmaker:
             # Shuffle the players for this iteration
             random.shuffle(available_players)
             
-            # Create random teams
+            # Create teams with calculated distribution
             teams = []
+            player_index = 0
+            
             for i in range(num_teams):
-                start_idx = i * team_size
-                end_idx = start_idx + team_size
-                if end_idx <= len(available_players):
-                    teams.append(available_players[start_idx:end_idx])
+                # Determine team size (some teams get an extra player)
+                current_team_size = base_size + (1 if i < extra_players else 0)
+                
+                # Create team
+                team = available_players[player_index:player_index + current_team_size]
+                teams.append(team)
+                player_index += current_team_size
             
             # Skip if we couldn't create enough teams
             if len(teams) < num_teams:
@@ -680,18 +691,24 @@ class VolleyballMatchmaker:
             print("Failed to create balanced teams. Using simple division.")
             random.shuffle(available_players)
             best_teams = []
+            player_index = 0
+            
             for i in range(num_teams):
-                start_idx = i * team_size
-                end_idx = start_idx + team_size
-                if end_idx <= len(available_players):
-                    best_teams.append(available_players[start_idx:end_idx])
+                # Determine team size (some teams get an extra player)
+                current_team_size = base_size + (1 if i < extra_players else 0)
+                
+                # Create team
+                if player_index + current_team_size <= len(available_players):
+                    team = available_players[player_index:player_index + current_team_size]
+                    best_teams.append(team)
+                    player_index += current_team_size
         
         # Display team information
         print("\nTeams created:")
         for i, team in enumerate(best_teams):
             team_skill = sum(p.weighted_rating() for p in team) / len(team)
             team_chem = self.team_chemistry_score(team)
-            print(f"Team {i+1} - Avg Rating: {team_skill:.1f}, Chemistry: {team_chem:.1f}")
+            print(f"Team {i+1} ({len(team)} players) - Avg Rating: {team_skill:.1f}, Chemistry: {team_chem:.1f}")
 
         # Create non-duplicating optimal matchups
         print("\nRecommended Matchups:")
@@ -701,7 +718,7 @@ class VolleyballMatchmaker:
             team1 = best_teams[team1_idx]
             team2 = best_teams[team2_idx]
             quality = self.predict_match_quality(team1, team2)
-            print(f"Match {i+1}: Team {team1_idx+1} vs Team {team2_idx+1} - Quality: {quality:.1f}/100")
+            print(f"Match {i+1}: Team {team1_idx+1} ({len(team1)} players) vs Team {team2_idx+1} ({len(team2)} players) - Quality: {quality:.1f}/100")
         
         # Also show all possible matchups for reference
         print("\nAll Possible Matchups (Sorted by Quality):")
