@@ -592,7 +592,7 @@ class VolleyballMatchmaker:
             'recent_games': recent_games
         }
     
-    def create_multiple_teams(self, team_size: int = 6, num_teams: int = None, iterations: int = 200, 
+    def create_multiple_teams(self, team_size: int = 6, num_teams: int = None, iterations: int = 200,
                              schedule_rounds: int = None) -> List[List[Player]]:
         """
         Create multiple balanced teams from all attending players.
@@ -641,7 +641,7 @@ class VolleyballMatchmaker:
         
         # Optimization approach to create balanced teams
         best_teams = None
-        best_quality = -1
+        best_balance_score = float('inf')  # Lower is better (less variance)
         
         for _ in range(iterations):
             # Shuffle the players for this iteration
@@ -664,7 +664,12 @@ class VolleyballMatchmaker:
             if len(teams) < num_teams:
                 continue
             
-            # Calculate average quality across all possible matchups
+            # Calculate team balance score - focus strongly on equal average ratings
+            team_ratings = [sum(p.weighted_rating() for p in team) / len(team) for team in teams]
+            rating_variance = np.var(team_ratings)
+            avg_rating = np.mean(team_ratings)
+            
+            # Also calculate average quality across all possible matchups
             quality_sum = 0
             matchup_count = 0
             
@@ -674,25 +679,17 @@ class VolleyballMatchmaker:
                     quality_sum += quality
                     matchup_count += 1
             
-            # Calculate average quality and team variance
             avg_quality = quality_sum / max(1, matchup_count)
             
-            # Calculate team rating variance (lower is better - means teams are balanced)
-            team_ratings = [sum(p.weighted_rating() for p in team) / len(team) for team in teams]
-            rating_variance = np.var(team_ratings)
+            # Calculate team chemistry factor
+            avg_chemistry = sum(self.team_chemistry_score(team) for team in teams) / len(teams)
             
-            # Add to the team quality calculation
-            for team in teams:
-                # Count A-players on this team
-                a_players = sum(1 for p in team if p.skill_group == 'A')
-                if a_players > 1:
-                    avg_quality -= 20 * (a_players - 1)  # Strong penalty for multiple A players
+            # Combined balance score (heavily weighted towards rating balance)
+            # Lower score is better
+            balance_score = (rating_variance * 5.0) - (avg_quality / 100) - (avg_chemistry / 10)
             
-            # Combined score: high quality, low variance
-            combined_quality = avg_quality - (rating_variance * 5.0) / 100  
-          
-            if combined_quality > best_quality:
-                best_quality = combined_quality
+            if balance_score < best_balance_score:
+                best_balance_score = balance_score
                 best_teams = teams.copy()
         
         # If we couldn't create balanced teams, try with fewer iterations
@@ -712,13 +709,23 @@ class VolleyballMatchmaker:
                     best_teams.append(team)
                     player_index += current_team_size
         
-        # Display team information
+        # Display team information with rating ranges
         print("\nTeams created:")
+        team_ratings = []
         for i, team in enumerate(best_teams):
             team_skill = sum(p.weighted_rating() for p in team) / len(team)
+            team_ratings.append(team_skill)
             team_chem = self.team_chemistry_score(team)
             print(f"Team {i+1} ({len(team)} players) - Avg Rating: {team_skill:.1f}, Chemistry: {team_chem:.1f}")
-
+        
+        # Show overall team balance stats
+        rating_variance = np.var(team_ratings)
+        rating_range = max(team_ratings) - min(team_ratings)
+        print(f"\nTeam Balance Statistics:")
+        print(f"  Rating Range: {min(team_ratings):.1f} - {max(team_ratings):.1f} (spread: {rating_range:.1f})")
+        print(f"  Rating Variance: {rating_variance:.2f}")
+        print(f"  Perfect Balance: {'Yes' if rating_range < 5.0 else 'No'}")
+        
         # Create a fair match schedule if requested
         if schedule_rounds is not None and schedule_rounds > 0:
             schedule = self.create_match_schedule(best_teams, schedule_rounds)
@@ -732,7 +739,12 @@ class VolleyballMatchmaker:
                 team1 = best_teams[team1_idx]
                 team2 = best_teams[team2_idx]
                 quality = self.predict_match_quality(team1, team2)
-                print(f"Match {i+1}: Team {team1_idx+1} ({len(team1)} players) vs Team {team2_idx+1} ({len(team2)} players) - Quality: {quality:.1f}/100")
+                team1_rating = team_ratings[team1_idx]
+                team2_rating = team_ratings[team2_idx]
+                rating_diff = abs(team1_rating - team2_rating)
+                print(f"Match {i+1}: Team {team1_idx+1} ({len(team1)} players, {team1_rating:.1f}) vs " +
+                    f"Team {team2_idx+1} ({len(team2)} players, {team2_rating:.1f}) - " +
+                    f"Diff: {rating_diff:.1f}, Quality: {quality:.1f}/100")
         
         # Also show all possible matchups for reference
         print("\nAll Possible Matchups (Sorted by Quality):")
@@ -740,13 +752,14 @@ class VolleyballMatchmaker:
         for i in range(len(best_teams)):
             for j in range(i+1, len(best_teams)):
                 quality = self.predict_match_quality(best_teams[i], best_teams[j])
-                all_matchups.append((i+1, j+1, quality))
+                rating_diff = abs(team_ratings[i] - team_ratings[j])
+                all_matchups.append((i+1, j+1, quality, rating_diff))
         
         # Sort matchups by quality (highest first)
         all_matchups.sort(key=lambda x: x[2], reverse=True)
         
-        for team1, team2, quality in all_matchups:
-            print(f"Team {team1} vs Team {team2}: Match Quality {quality:.1f}/100")
+        for team1, team2, quality, rating_diff in all_matchups:
+            print(f"Team {team1} vs Team {team2}: Diff {rating_diff:.1f}, Quality {quality:.1f}/100")
         
         return best_teams
 
