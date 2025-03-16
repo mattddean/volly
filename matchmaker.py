@@ -669,6 +669,18 @@ class VolleyballMatchmaker:
             rating_variance = np.var(team_ratings)
             avg_rating = np.mean(team_ratings)
             
+            # Calculate the range of team ratings (max - min)
+            rating_range = max(team_ratings) - min(team_ratings)
+            
+            # Count how many A-tier players are on each team
+            a_tier_distribution = []
+            for team in teams:
+                a_players = sum(1 for p in team if p.skill_group == 'A')
+                a_tier_distribution.append(a_players)
+            
+            # Penalize teams with multiple A-tier players
+            a_tier_imbalance = sum(max(0, count - 1) for count in a_tier_distribution)
+            
             # Also calculate average quality across all possible matchups
             quality_sum = 0
             matchup_count = 0
@@ -686,7 +698,11 @@ class VolleyballMatchmaker:
             
             # Combined balance score (heavily weighted towards rating balance)
             # Lower score is better
-            balance_score = (rating_variance * 5.0) - (avg_quality / 100) - (avg_chemistry / 10)
+            balance_score = (rating_variance * 10.0) + \
+                           (rating_range * 3.0) + \
+                           (a_tier_imbalance * 50.0) - \
+                           (avg_quality / 100) - \
+                           (avg_chemistry / 10)
             
             if balance_score < best_balance_score:
                 best_balance_score = balance_score
