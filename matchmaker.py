@@ -693,8 +693,18 @@ class VolleyballMatchmaker:
             team_chem = self.team_chemistry_score(team)
             print(f"Team {i+1} - Avg Rating: {team_skill:.1f}, Chemistry: {team_chem:.1f}")
 
-        # Show all possible matchups and their quality
-        print("\nPredicted Matchups:")
+        # Create non-duplicating optimal matchups
+        print("\nRecommended Matchups:")
+        optimal_matchups = self.create_optimal_matchups(best_teams)
+        
+        for i, (team1_idx, team2_idx) in enumerate(optimal_matchups):
+            team1 = best_teams[team1_idx]
+            team2 = best_teams[team2_idx]
+            quality = self.predict_match_quality(team1, team2)
+            print(f"Match {i+1}: Team {team1_idx+1} vs Team {team2_idx+1} - Quality: {quality:.1f}/100")
+        
+        # Also show all possible matchups for reference
+        print("\nAll Possible Matchups (Sorted by Quality):")
         all_matchups = []
         for i in range(len(best_teams)):
             for j in range(i+1, len(best_teams)):
@@ -708,6 +718,41 @@ class VolleyballMatchmaker:
             print(f"Team {team1} vs Team {team2}: Match Quality {quality:.1f}/100")
         
         return best_teams
+
+    def create_optimal_matchups(self, teams: List[List[Player]]) -> List[Tuple[int, int]]:
+        """
+        Create optimal non-duplicating matchups so all teams can play simultaneously.
+        Returns a list of (team1_idx, team2_idx) pairs.
+        """
+        # If odd number of teams, one team will sit out
+        matchups = []
+        
+        if len(teams) < 2:
+            return matchups
+            
+        # Create all possible matchups with their quality scores
+        possible_matchups = []
+        for i in range(len(teams)):
+            for j in range(i+1, len(teams)):
+                quality = self.predict_match_quality(teams[i], teams[j])
+                possible_matchups.append((i, j, quality))
+        
+        # Sort by quality (highest first)
+        possible_matchups.sort(key=lambda x: x[2], reverse=True)
+        
+        # Greedy algorithm: take highest quality matchups where teams haven't played yet
+        used_teams = set()
+        for team1_idx, team2_idx, _ in possible_matchups:
+            if team1_idx not in used_teams and team2_idx not in used_teams:
+                matchups.append((team1_idx, team2_idx))
+                used_teams.add(team1_idx)
+                used_teams.add(team2_idx)
+                
+                # If all teams are matched, we're done
+                if len(used_teams) >= len(teams) - (len(teams) % 2):
+                    break
+                    
+        return matchups
 
     def reset_player_stats(self, reset_all: bool = False, player_name: str = None) -> None:
         """
@@ -794,9 +839,23 @@ def main():
             for player in team1:
                 print(f"  {player}")
             
+            # Calculate and display team averages
+            team1_skill = sum(p.weighted_rating() for p in team1) / len(team1)
+            team1_chem = matchmaker.team_chemistry_score(team1)
+            print(f"  Team Average: Rating {team1_skill:.1f}, Chemistry {team1_chem:.1f}")
+            
             print("\nTeam 2:")
             for player in team2:
                 print(f"  {player}")
+            
+            # Calculate and display team averages
+            team2_skill = sum(p.weighted_rating() for p in team2) / len(team2)
+            team2_chem = matchmaker.team_chemistry_score(team2)
+            print(f"  Team Average: Rating {team2_skill:.1f}, Chemistry {team2_chem:.1f}")
+            
+            # Display match quality
+            quality = matchmaker.predict_match_quality(team1, team2)
+            print(f"\nMatch Quality: {quality:.1f}/100")
         
         elif choice == "3":
             if not matchmaker.attending_players:
@@ -816,7 +875,12 @@ def main():
                     print(f"\nTeam {i+1}:")
                     for player in team:
                         print(f"  {player}")
-            
+                    
+                    # Add team average display (fixed indentation to be outside player loop)
+                    team_skill = sum(p.weighted_rating() for p in team) / len(team)
+                    team_chem = matchmaker.team_chemistry_score(team)
+                    print(f"  Team Average: Rating {team_skill:.1f}, Chemistry {team_chem:.1f}")
+        
         elif choice == "4":
             if not matchmaker.attending_players:
                 print("Please load attending players first.")
@@ -850,6 +914,11 @@ def main():
                     print(f"\nTeam {i+1}:")
                     for player in team:
                         print(f"  {player}")
+                    
+                    # Add team average display (fixed indentation to be outside player loop)
+                    team_skill = sum(p.weighted_rating() for p in team) / len(team)
+                    team_chem = matchmaker.team_chemistry_score(team)
+                    print(f"  Team Average: Rating {team_skill:.1f}, Chemistry {team_chem:.1f}")
                 
                 # Select which teams played
                 team1_idx = int(input("\nEnter number for first team: ")) - 1
@@ -894,9 +963,23 @@ def main():
             for player in team1:
                 print(f"  {player}")
             
+            # Add team average display
+            team1_skill = sum(p.weighted_rating() for p in team1) / len(team1)
+            team1_chem = matchmaker.team_chemistry_score(team1)
+            print(f"  Team Average: Rating {team1_skill:.1f}, Chemistry {team1_chem:.1f}")
+            
             print("\nTeam 2:")
             for player in team2:
                 print(f"  {player}")
+            
+            # Add team average display
+            team2_skill = sum(p.weighted_rating() for p in team2) / len(team2)
+            team2_chem = matchmaker.team_chemistry_score(team2)
+            print(f"  Team Average: Rating {team2_skill:.1f}, Chemistry {team2_chem:.1f}")
+            
+            # Display match quality
+            quality = matchmaker.predict_match_quality(team1, team2)
+            print(f"\nMatch Quality: {quality:.1f}/100")
             
             winner = input("\nWhich team do you think would win? (1/2): ")
             if winner in ["1", "2"]:
