@@ -647,39 +647,66 @@ class VolleyballMatchmaker:
             # Shuffle the players for this iteration
             random.shuffle(available_players)
             
-            # Create teams with calculated distribution
-            teams = []
+            # Pre-sort A-tier players to distribute them
+            a_tier_players = [p for p in available_players if p.skill_group == 'A']
+            non_a_players = [p for p in available_players if p.skill_group != 'A']
+            
+            # Check if we can distribute A players evenly
+            if len(a_tier_players) > num_teams:
+                print(f"Warning: More A-tier players ({len(a_tier_players)}) than teams ({num_teams})!")
+            
+            # Create teams with calculated distribution but ensure A-tier players are distributed
+            teams = [[] for _ in range(num_teams)]
+            
+            # First, distribute A-tier players (at most one per team)
+            for i, player in enumerate(a_tier_players):
+                if i < num_teams:  # Assign one A player per team until we run out of teams
+                    teams[i].append(player)
+                else:
+                    # If we have more A players than teams, add to non-A list to be distributed later
+                    non_a_players.append(player)
+            
+            # Shuffle the remaining players
+            random.shuffle(non_a_players)
+            
+            # Distribute remaining players to balance team sizes
             player_index = 0
-            
             for i in range(num_teams):
-                # Determine team size (some teams get an extra player)
-                current_team_size = base_size + (1 if i < extra_players else 0)
+                # Calculate remaining spots needed
+                current_team_size = len(teams[i])
+                target_size = base_size + (1 if i < extra_players else 0)
+                spots_needed = target_size - current_team_size
                 
-                # Create team
-                team = available_players[player_index:player_index + current_team_size]
-                teams.append(team)
-                player_index += current_team_size
+                # Add remaining players
+                if spots_needed > 0 and player_index + spots_needed <= len(non_a_players):
+                    teams[i].extend(non_a_players[player_index:player_index + spots_needed])
+                    player_index += spots_needed
             
-            # Skip if we couldn't create enough teams
-            if len(teams) < num_teams:
+            # Skip if we couldn't create enough balanced teams
+            if any(len(team) < base_size - 1 for team in teams):
                 continue
+                
+            # Calculate normalized team ratings to account for different team sizes
+            team_ratings = []
+            all_player_ratings = [p.weighted_rating() for p in available_players]
+            global_avg_rating = sum(all_player_ratings) / len(all_player_ratings)
             
-            # Calculate team balance score - focus strongly on equal average ratings
-            team_ratings = [sum(p.weighted_rating() for p in team) / len(team) for team in teams]
-            rating_variance = np.var(team_ratings)
-            avg_rating = np.mean(team_ratings)
-            
-            # Calculate the range of team ratings (max - min)
-            rating_range = max(team_ratings) - min(team_ratings)
-            
-            # Count how many A-tier players are on each team
-            a_tier_distribution = []
             for team in teams:
-                a_players = sum(1 for p in team if p.skill_group == 'A')
-                a_tier_distribution.append(a_players)
+                if len(team) == team_size:
+                    # For full-sized teams, use actual average
+                    team_avg = sum(p.weighted_rating() for p in team) / len(team)
+                else:
+                    # For smaller teams, add "virtual players" at the global average rating
+                    total_rating = sum(p.weighted_rating() for p in team)
+                    missing_players = team_size - len(team)
+                    normalized_rating = (total_rating + (missing_players * global_avg_rating)) / team_size
+                    team_avg = normalized_rating
+                
+                team_ratings.append(team_avg)
             
-            # Penalize teams with multiple A-tier players
-            a_tier_imbalance = sum(max(0, count - 1) for count in a_tier_distribution)
+            # Calculate the range and variance of normalized ratings
+            rating_variance = np.var(team_ratings)
+            rating_range = max(team_ratings) - min(team_ratings)
             
             # Also calculate average quality across all possible matchups
             quality_sum = 0
@@ -699,8 +726,7 @@ class VolleyballMatchmaker:
             # Combined balance score (heavily weighted towards rating balance)
             # Lower score is better
             balance_score = (rating_variance * 10.0) + \
-                           (rating_range * 3.0) + \
-                           (a_tier_imbalance * 50.0) - \
+                           (rating_range * 3.0) - \
                            (avg_quality / 100) - \
                            (avg_chemistry / 10)
             
@@ -725,29 +751,48 @@ class VolleyballMatchmaker:
                     best_teams.append(team)
                     player_index += current_team_size
         
-        # Display team information with rating ranges
+        # For displaying team info, we'll show both actual and normalized ratings
         print("\nTeams created:")
         team_ratings = []
+        normalized_ratings = []
+        all_player_ratings = [p.weighted_rating() for p in available_players]
+        global_avg_rating = sum(all_player_ratings) / len(all_player_ratings)
+        
         for i, team in enumerate(best_teams):
+            # Actual average rating
             team_skill = sum(p.weighted_rating() for p in team) / len(team)
             team_ratings.append(team_skill)
+            
+            # Normalized rating (for comparing teams of different sizes)
+            if len(team) == team_size:
+                norm_rating = team_skill
+            else:
+                total_rating = sum(p.weighted_rating() for p in team)
+                missing_players = team_size - len(team)
+                norm_rating = (total_rating + (missing_players * global_avg_rating)) / team_size
+            
+            normalized_ratings.append(norm_rating)
+            
             team_chem = self.team_chemistry_score(team)
-            print(f"Team {i+1} ({len(team)} players) - Avg Rating: {team_skill:.1f}, Chemistry: {team_chem:.1f}")
+            print(f"Team {i+1} ({len(team)} players) - Avg Rating: {team_skill:.1f}, " +
+                  f"Normalized: {norm_rating:.1f}, Chemistry: {team_chem:.1f}")
         
         # Show overall team balance stats
-        rating_variance = np.var(team_ratings)
-        rating_range = max(team_ratings) - min(team_ratings)
+        rating_variance = np.var(normalized_ratings)  # Use normalized ratings for variance
+        rating_range = max(normalized_ratings) - min(normalized_ratings)
         print(f"\nTeam Balance Statistics:")
-        print(f"  Rating Range: {min(team_ratings):.1f} - {max(team_ratings):.1f} (spread: {rating_range:.1f})")
-        print(f"  Rating Variance: {rating_variance:.2f}")
+        print(f"  Normalized Rating Range: {min(normalized_ratings):.1f} - {max(normalized_ratings):.1f} (spread: {rating_range:.1f})")
+        print(f"  Normalized Rating Variance: {rating_variance:.2f}")
         print(f"  Perfect Balance: {'Yes' if rating_range < 5.0 else 'No'}")
         
-        # Create a fair match schedule if requested
+        # For matchups, we'll also update to show normalized ratings
         if schedule_rounds is not None and schedule_rounds > 0:
+            # Create the schedule first
             schedule = self.create_match_schedule(best_teams, schedule_rounds)
-            self.display_match_schedule(best_teams, schedule)
+            # Then display it with normalized ratings
+            self.display_match_schedule(best_teams, schedule, normalized_ratings)
         else:
-            # Just create one optimal round of matchups as before
+            # Create matchups showing normalized ratings
             print("\nRecommended Matchups:")
             optimal_matchups = self.create_optimal_matchups(best_teams)
             
@@ -757,10 +802,13 @@ class VolleyballMatchmaker:
                 quality = self.predict_match_quality(team1, team2)
                 team1_rating = team_ratings[team1_idx]
                 team2_rating = team_ratings[team2_idx]
-                rating_diff = abs(team1_rating - team2_rating)
-                print(f"Match {i+1}: Team {team1_idx+1} ({len(team1)} players, {team1_rating:.1f}) vs " +
-                    f"Team {team2_idx+1} ({len(team2)} players, {team2_rating:.1f}) - " +
-                    f"Diff: {rating_diff:.1f}, Quality: {quality:.1f}/100")
+                team1_norm = normalized_ratings[team1_idx]
+                team2_norm = normalized_ratings[team2_idx]
+                rating_diff = abs(team1_norm - team2_norm)
+                
+                print(f"Match {i+1}: Team {team1_idx+1} ({len(team1)} players, {team1_rating:.1f}/{team1_norm:.1f} norm) vs " +
+                      f"Team {team2_idx+1} ({len(team2)} players, {team2_rating:.1f}/{team2_norm:.1f} norm) - " +
+                      f"Norm Diff: {rating_diff:.1f}, Quality: {quality:.1f}/100")
         
         # Also show all possible matchups for reference
         print("\nAll Possible Matchups (Sorted by Quality):")
@@ -863,9 +911,15 @@ class VolleyballMatchmaker:
         
         return schedule
 
-    def display_match_schedule(self, teams: List[List[Player]], schedule: List[List[Tuple[int, int]]]):
+    def display_match_schedule(self, teams: List[List[Player]], schedule: List[List[Tuple[int, int]]], 
+                              normalized_ratings: List[float] = None):
         """
         Display the full match schedule with quality ratings.
+        
+        Args:
+            teams: List of teams
+            schedule: Schedule of rounds and matchups
+            normalized_ratings: Optional list of normalized ratings for each team
         """
         print("\n===== FULL MATCH SCHEDULE =====")
         
@@ -879,11 +933,19 @@ class VolleyballMatchmaker:
                 
                 team1_skill = sum(p.weighted_rating() for p in team1) / len(team1)
                 team2_skill = sum(p.weighted_rating() for p in team2) / len(team2)
-                rating_diff = abs(team1_skill - team2_skill)
                 
-                print(f"  Match {match_idx + 1}: Team {team1_idx + 1} ({len(team1)} players, {team1_skill:.1f}) vs " +
-                      f"Team {team2_idx + 1} ({len(team2)} players, {team2_skill:.1f}) - " +
-                      f"Diff: {rating_diff:.1f}, Quality: {quality:.1f}/100")
+                if normalized_ratings:
+                    team1_norm = normalized_ratings[team1_idx]
+                    team2_norm = normalized_ratings[team2_idx]
+                    rating_diff = abs(team1_norm - team2_norm)
+                    print(f"  Match {match_idx + 1}: Team {team1_idx + 1} ({len(team1)} players, {team1_skill:.1f}/{team1_norm:.1f} norm) vs " +
+                          f"Team {team2_idx + 1} ({len(team2)} players, {team2_skill:.1f}/{team2_norm:.1f} norm) - " +
+                          f"Norm Diff: {rating_diff:.1f}, Quality: {quality:.1f}/100")
+                else:
+                    rating_diff = abs(team1_skill - team2_skill)
+                    print(f"  Match {match_idx + 1}: Team {team1_idx + 1} ({len(team1)} players, {team1_skill:.1f}) vs " +
+                          f"Team {team2_idx + 1} ({len(team2)} players, {team2_skill:.1f}) - " +
+                          f"Diff: {rating_diff:.1f}, Quality: {quality:.1f}/100")
 
     def create_optimal_matchups(self, teams: List[List[Player]]) -> List[Tuple[int, int]]:
         """
