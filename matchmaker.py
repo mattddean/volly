@@ -592,7 +592,8 @@ class VolleyballMatchmaker:
             'recent_games': recent_games
         }
     
-    def create_multiple_teams(self, team_size: int = 6, num_teams: int = None, iterations: int = 200) -> List[List[Player]]:
+    def create_multiple_teams(self, team_size: int = 6, num_teams: int = None, iterations: int = 200, 
+                             schedule_rounds: int = None) -> List[List[Player]]:
         """
         Create multiple balanced teams from all attending players.
         
@@ -600,6 +601,7 @@ class VolleyballMatchmaker:
             team_size: Target number of players per team
             num_teams: Specific number of teams to create (if None, creates maximum possible)
             iterations: Number of optimization attempts
+            schedule_rounds: Number of rounds to schedule (if None, maximum possible)
             
         Returns:
             List of teams, where each team is a list of players
@@ -679,9 +681,16 @@ class VolleyballMatchmaker:
             team_ratings = [sum(p.weighted_rating() for p in team) / len(team) for team in teams]
             rating_variance = np.var(team_ratings)
             
-            # Combined score: high quality, low variance
-            combined_quality = avg_quality - rating_variance / 100
+            # Add to the team quality calculation
+            for team in teams:
+                # Count A-players on this team
+                a_players = sum(1 for p in team if p.skill_group == 'A')
+                if a_players > 1:
+                    avg_quality -= 20 * (a_players - 1)  # Strong penalty for multiple A players
             
+            # Combined score: high quality, low variance
+            combined_quality = avg_quality - (rating_variance * 5.0) / 100  
+          
             if combined_quality > best_quality:
                 best_quality = combined_quality
                 best_teams = teams.copy()
@@ -710,15 +719,20 @@ class VolleyballMatchmaker:
             team_chem = self.team_chemistry_score(team)
             print(f"Team {i+1} ({len(team)} players) - Avg Rating: {team_skill:.1f}, Chemistry: {team_chem:.1f}")
 
-        # Create non-duplicating optimal matchups
-        print("\nRecommended Matchups:")
-        optimal_matchups = self.create_optimal_matchups(best_teams)
-        
-        for i, (team1_idx, team2_idx) in enumerate(optimal_matchups):
-            team1 = best_teams[team1_idx]
-            team2 = best_teams[team2_idx]
-            quality = self.predict_match_quality(team1, team2)
-            print(f"Match {i+1}: Team {team1_idx+1} ({len(team1)} players) vs Team {team2_idx+1} ({len(team2)} players) - Quality: {quality:.1f}/100")
+        # Create a fair match schedule if requested
+        if schedule_rounds is not None and schedule_rounds > 0:
+            schedule = self.create_match_schedule(best_teams, schedule_rounds)
+            self.display_match_schedule(best_teams, schedule)
+        else:
+            # Just create one optimal round of matchups as before
+            print("\nRecommended Matchups:")
+            optimal_matchups = self.create_optimal_matchups(best_teams)
+            
+            for i, (team1_idx, team2_idx) in enumerate(optimal_matchups):
+                team1 = best_teams[team1_idx]
+                team2 = best_teams[team2_idx]
+                quality = self.predict_match_quality(team1, team2)
+                print(f"Match {i+1}: Team {team1_idx+1} ({len(team1)} players) vs Team {team2_idx+1} ({len(team2)} players) - Quality: {quality:.1f}/100")
         
         # Also show all possible matchups for reference
         print("\nAll Possible Matchups (Sorted by Quality):")
@@ -735,6 +749,112 @@ class VolleyballMatchmaker:
             print(f"Team {team1} vs Team {team2}: Match Quality {quality:.1f}/100")
         
         return best_teams
+
+    def create_match_schedule(self, teams: List[List[Player]], num_rounds: int) -> List[List[Tuple[int, int]]]:
+        """
+        Create a fair match schedule for multiple rounds, ensuring teams don't play the same opponent twice.
+        
+        Args:
+            teams: List of teams
+            num_rounds: Number of rounds to schedule
+            
+        Returns:
+            List of rounds, where each round is a list of (team1_idx, team2_idx) matchups
+        """
+        num_teams = len(teams)
+        
+        # Calculate maximum possible rounds where each team plays once per round
+        max_rounds = num_teams - 1 if num_teams % 2 == 0 else num_teams
+        
+        # Cap requested rounds to maximum possible without repeats
+        num_rounds = min(num_rounds, max_rounds)
+        
+        # For odd number of teams, one team sits out each round
+        has_bye = num_teams % 2 == 1
+        
+        # Track which teams have played each other
+        played_against = set()  # (team1_idx, team2_idx) pairs that have already played
+        
+        # Create schedule
+        schedule = []
+        
+        # Use circle method for round-robin tournament scheduling
+        if has_bye:
+            # With odd number of teams, we'll use a dummy team that represents a "bye"
+            virtual_teams = list(range(num_teams + 1))  # 0 to num_teams (inclusive)
+            max_rounds = num_teams  # With odd teams, max rounds equals team count
+        else:
+            virtual_teams = list(range(num_teams))  # 0 to num_teams-1
+        
+        # Fix team 0, rotate others for standard round-robin scheduling
+        for round_num in range(min(num_rounds, max_rounds)):
+            round_matchups = []
+            
+            # Rotate teams (except team 0)
+            if round_num > 0:
+                virtual_teams = [virtual_teams[0]] + [virtual_teams[-1]] + virtual_teams[1:-1]
+            
+            # Create matchups for this round
+            for i in range(len(virtual_teams) // 2):
+                team1_idx = virtual_teams[i]
+                team2_idx = virtual_teams[len(virtual_teams) - 1 - i]
+                
+                # Skip if this involves the dummy team (for odd number of teams)
+                if has_bye and (team1_idx == num_teams or team2_idx == num_teams):
+                    # One team gets a bye this round
+                    bye_team = team1_idx if team2_idx == num_teams else team2_idx
+                    if bye_team < num_teams:  # Only record real teams
+                        # No matchup needed - this team has a bye
+                        pass
+                else:
+                    # Ensure team1_idx < team2_idx for consistency
+                    if team1_idx > team2_idx:
+                        team1_idx, team2_idx = team2_idx, team1_idx
+                    
+                    # Only add if both are real teams
+                    if team1_idx < num_teams and team2_idx < num_teams:
+                        round_matchups.append((team1_idx, team2_idx))
+                        played_against.add((team1_idx, team2_idx))
+            
+            schedule.append(round_matchups)
+        
+        # Sort each round by match quality
+        for round_idx in range(len(schedule)):
+            # Calculate match quality for each matchup
+            matchups_with_quality = []
+            for team1_idx, team2_idx in schedule[round_idx]:
+                quality = self.predict_match_quality(teams[team1_idx], teams[team2_idx])
+                matchups_with_quality.append((team1_idx, team2_idx, quality))
+            
+            # Sort by quality (highest first)
+            matchups_with_quality.sort(key=lambda x: x[2], reverse=True)
+            
+            # Update schedule with sorted matchups
+            schedule[round_idx] = [(m[0], m[1]) for m in matchups_with_quality]
+        
+        return schedule
+
+    def display_match_schedule(self, teams: List[List[Player]], schedule: List[List[Tuple[int, int]]]):
+        """
+        Display the full match schedule with quality ratings.
+        """
+        print("\n===== FULL MATCH SCHEDULE =====")
+        
+        for round_idx, round_matchups in enumerate(schedule):
+            print(f"\nROUND {round_idx + 1}:")
+            
+            for match_idx, (team1_idx, team2_idx) in enumerate(round_matchups):
+                team1 = teams[team1_idx]
+                team2 = teams[team2_idx]
+                quality = self.predict_match_quality(team1, team2)
+                
+                team1_skill = sum(p.weighted_rating() for p in team1) / len(team1)
+                team2_skill = sum(p.weighted_rating() for p in team2) / len(team2)
+                rating_diff = abs(team1_skill - team2_skill)
+                
+                print(f"  Match {match_idx + 1}: Team {team1_idx + 1} ({len(team1)} players, {team1_skill:.1f}) vs " +
+                      f"Team {team2_idx + 1} ({len(team2)} players, {team2_skill:.1f}) - " +
+                      f"Diff: {rating_diff:.1f}, Quality: {quality:.1f}/100")
 
     def create_optimal_matchups(self, teams: List[List[Player]]) -> List[Tuple[int, int]]:
         """
@@ -859,7 +979,7 @@ def main():
             # Calculate and display team averages
             team1_skill = sum(p.weighted_rating() for p in team1) / len(team1)
             team1_chem = matchmaker.team_chemistry_score(team1)
-            print(f"  Team Average: Rating {team1_skill:.1f}, Chemistry {team1_chem:.1f}")
+            print(f"Team Average: Rating {team1_skill:.1f}, Chemistry {team1_chem:.1f}")
             
             print("\nTeam 2:")
             for player in team2:
@@ -868,7 +988,7 @@ def main():
             # Calculate and display team averages
             team2_skill = sum(p.weighted_rating() for p in team2) / len(team2)
             team2_chem = matchmaker.team_chemistry_score(team2)
-            print(f"  Team Average: Rating {team2_skill:.1f}, Chemistry {team2_chem:.1f}")
+            print(f"Team Average: Rating {team2_skill:.1f}, Chemistry {team2_chem:.1f}")
             
             # Display match quality
             quality = matchmaker.predict_match_quality(team1, team2)
@@ -885,7 +1005,10 @@ def main():
             num_teams = input("Enter number of teams (or press Enter for maximum possible): ")
             num_teams = int(num_teams) if num_teams.isdigit() else None
             
-            teams = matchmaker.create_multiple_teams(team_size, num_teams)
+            schedule_rounds = input("Enter number of rounds to schedule (or press Enter for one round): ")
+            schedule_rounds = int(schedule_rounds) if schedule_rounds.isdigit() else None
+            
+            teams = matchmaker.create_multiple_teams(team_size, num_teams, schedule_rounds=schedule_rounds)
             
             if teams:
                 for i, team in enumerate(teams):
