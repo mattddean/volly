@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "words": [
+    "matchup",
+    "matchups",
+    "checkin",
+    "checkins"
+  ],
+  "ignoreWords": []
+}
