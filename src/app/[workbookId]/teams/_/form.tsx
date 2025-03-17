@@ -13,11 +13,10 @@ import {
   FormField,
 } from "~/components/ui/form";
 import { createTeamsAndMatchups } from "./actions";
-import type { SelectUser } from "~/db/schema";
 import { useState } from "react";
-import { Player } from "../../../../models/player";
+import { Player } from "~/models/player";
 
-export function GenerateTeamsForm({ users }: { users: SelectUser[] }) {
+export function GenerateTeamsForm() {
   const form = useForm<GenerateTeamsSchema>({
     resolver: zodResolver(generateTeamsSchema),
     defaultValues: {
@@ -35,35 +34,36 @@ export function GenerateTeamsForm({ users }: { users: SelectUser[] }) {
 
   return (
     <Form {...form}>
-      <div>Please find yourself in this list</div>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-2/3 space-y-6">
-        <FormField
-          control={form.control}
-          name="teamSize"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Team Size</FormLabel>
-              <Input type="number" {...field} />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="scheduleRounds"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Schedule Rounds</FormLabel>
-              <Input type="number" {...field} />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <div className="justify-center items-center flex h-full min-h-screen">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="teamSize"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Team Size</FormLabel>
+                <Input type="number" {...field} />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="scheduleRounds"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Schedule Rounds</FormLabel>
+                <Input type="number" {...field} />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <Button variant="secondary">Generate Teams</Button>
-      </form>
+          {JSON.stringify(teams)}
 
-      {JSON.stringify(teams)}
+          <Button>Generate Teams</Button>
+        </form>
+      </div>
     </Form>
   );
 }
