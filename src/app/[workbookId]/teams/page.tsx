@@ -1,12 +1,7 @@
-import { eq, inArray } from "drizzle-orm";
-import {
-  attendeeSetsTable,
-  checkinsTable,
-  teamsTable,
-  usersTable,
-} from "~/db/schema";
-import { db } from "~/db";
+import { Loader2Icon } from "lucide-react";
 import { GenerateTeamsForm } from "./_/form";
+import { TeamGrid } from "./_/team-grid";
+import { Suspense } from "react";
 
 export default async function TeamsPage({
   params,
@@ -15,39 +10,20 @@ export default async function TeamsPage({
 }) {
   const workbookId = (await params).workbookId;
 
-  const teams = await db.query.teamsTable.findMany({
-    where: eq(teamsTable.workbookId, Number(workbookId)),
-    with: { users: { with: { user: true } } },
-  });
-
-  const attendeeSet = await db.query.attendeeSetsTable.findFirst({
-    where: eq(attendeeSetsTable.workbookId, Number(workbookId)),
-  });
-
-  const checkins = await db.query.checkinsTable.findMany({
-    where: eq(checkinsTable.attendeeSetId, attendeeSet?.id ?? 0),
-  });
-
-  const users = await db.query.usersTable.findMany({
-    where: inArray(
-      usersTable.id,
-      checkins.map((checkin) => checkin.userId),
-    ),
-  });
-
   return (
-    <div>
-      <div>
-        {teams.map((team) => {
-          return (
-            <div key={team.id}>
-              <div>{team.name}</div>
-              <div>{team.users.map((user) => user.user?.name)}</div>
+    <div className="flex flex-col gap-y-12 px-16">
+      <div className="h-12" />
+      <GenerateTeamsForm>
+        <Suspense
+          fallback={
+            <div className="size-full flex items-center justify-center">
+              <Loader2Icon className="size-6 animate-spin" />
             </div>
-          );
-        })}
-      </div>
-      <GenerateTeamsForm />
+          }
+        >
+          <TeamGrid workbookId={workbookId} />
+        </Suspense>
+      </GenerateTeamsForm>
     </div>
   );
 }

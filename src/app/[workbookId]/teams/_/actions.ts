@@ -15,10 +15,10 @@ import { VolleyballMatchmaker } from "~/volleyball-matchmaker";
 import { type GenerateTeamsSchema, generateTeamsSchema } from "./schemas";
 
 export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
+  const workbookId = 1; // TODO: real workbook id
+
   const result = await withActionResult(async () => {
     const validatedData = generateTeamsSchema.parse(data);
-
-    const workbookId = 1; // TODO: real workbook id
 
     const attendeeSet = await db.query.attendeeSetsTable.findFirst({
       where: eq(attendeeSetsTable.workbookId, Number(workbookId)),
@@ -75,29 +75,32 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
     // delete all existing teams
     await db.delete(teamsTable).where(eq(teamsTable.workbookId, workbookId));
 
-    for (const players of teams) {
-      const ts = await db
-        .insert(teamsTable)
-        .values(
-          teams.map(() => ({
-            name: "", // TODO: real name or get rid of this
-            workbookId,
-          })),
-        )
-        .returning();
-      const team = ts[0];
-      if (!team) throw new Error("DB Issue: team not returned from insert");
+    // create enough blank teams
+    const ts = await db
+      .insert(teamsTable)
+      .values(
+        teams.map((_player, index) => ({
+          name: `Team ${index + 1}`,
+          workbookId,
+        })),
+      )
+      .returning();
 
-      for (const player of players) {
-        await db.insert(teamsUsersTable).values({
+    // fill each team with players
+    for (const [index, players] of teams.entries()) {
+      const team = ts[index];
+      await db.insert(teamsUsersTable).values(
+        players.map((player) => ({
           teamId: team.id,
           userId: player.id,
-        });
-      }
+        })),
+      );
     }
 
     revalidatePath(`${workbookId}/teams`);
   }, "Unable to create teams and matchups");
+
+  if (result.error) return result.response;
 
   return result.response;
 }
