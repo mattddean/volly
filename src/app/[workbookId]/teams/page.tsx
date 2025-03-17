@@ -31,7 +31,7 @@ export default async function TeamsPage({
   const users = await db.query.usersTable.findMany({
     where: inArray(
       usersTable.id,
-      checkins.map((checkin) => checkin.userId)
+      checkins.map((checkin) => checkin.userId),
     ),
   });
 

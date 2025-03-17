@@ -23,9 +23,9 @@ export class Player {
     id: number,
     name: string,
     skillGroup: string,
-    zScore: number = 100.0,
-    sigma: number = 100.0,
-    lastPlayed: Date | null = null
+    zScore = 100.0,
+    sigma = 100.0,
+    lastPlayed: Date | null = null,
   ) {
     this.id = id;
     this.name = name;
@@ -76,7 +76,7 @@ export class Player {
     // Starts at 100%, reduces to 20% after 30 games
     const skillWeight = Math.max(
       0.2,
-      Math.min(1.0, 1.0 - (this.gamesPlayed * 0.8) / 30)
+      Math.min(1.0, 1.0 - (this.gamesPlayed * 0.8) / 30),
     );
 
     // Blend the ratings
@@ -90,12 +90,12 @@ export class Player {
     if (this.gamesPlayed < 30) {
       const skillWeight = Math.max(
         0.2,
-        Math.min(1.0, 1.0 - (this.gamesPlayed * 0.8) / 30)
+        Math.min(1.0, 1.0 - (this.gamesPlayed * 0.8) / 30),
       );
       const skillPct = Math.round(skillWeight * 100);
       const weighted = this.weightedRating();
       return `${this.name} (${this.skillGroup}, ${this.zScore.toFixed(
-        1
+        1,
       )}±${this.sigma.toFixed(1)}, w:${weighted.toFixed(1)}, ${skillPct}%sg, ${
         this.gamesPlayed
       }g)`;
@@ -103,7 +103,7 @@ export class Player {
       // At 30+ games, we maintain 20% skill group influence
       const weighted = this.weightedRating();
       return `${this.name} (${this.skillGroup}, ${this.zScore.toFixed(
-        1
+        1,
       )}±${this.sigma.toFixed(1)}, w:${weighted.toFixed(1)}, 20%sg, ${
         this.gamesPlayed
       }g)`;
@@ -136,20 +136,20 @@ export class Player {
       0, // TODO: clean this up
       obj["Name"],
       obj["Skill_Group"],
-      parseFloat(obj["Z_Score"]),
-      parseFloat(obj["Sigma"]),
-      obj["LastPlayed"] ? new Date(obj["LastPlayed"]) : new Date()
+      Number.parseFloat(obj["Z_Score"]),
+      Number.parseFloat(obj["Sigma"]),
+      obj["LastPlayed"] ? new Date(obj["LastPlayed"]) : new Date(),
     );
 
-    player.gamesPlayed = parseInt(obj["GamesPlayed"] || "0");
-    player.wins = parseInt(obj["Wins"] || "0");
-    player.pointsScored = parseInt(obj["PointsScored"] || "0");
-    player.pointsAllowed = parseInt(obj["PointsAllowed"] || "0");
+    player.gamesPlayed = Number.parseInt(obj["GamesPlayed"] || "0");
+    player.wins = Number.parseInt(obj["Wins"] || "0");
+    player.pointsScored = Number.parseInt(obj["PointsScored"] || "0");
+    player.pointsAllowed = Number.parseInt(obj["PointsAllowed"] || "0");
 
     // Restore chemistry if available
     if (Array.isArray(obj.chemistry)) {
       obj["Chemistry"].forEach((pair: any) => {
-        player.chemistry[pair.playerName] = parseFloat(pair.score);
+        player.chemistry[pair.playerName] = Number.parseFloat(pair.score);
       });
     }
 

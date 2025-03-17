@@ -23,7 +23,7 @@ async function main() {
       pointsAllowed: user.pointsAllowed,
       pointsScored: user.pointsScored,
       wins: user.wins,
-    }))
+    })),
   );
 }
 

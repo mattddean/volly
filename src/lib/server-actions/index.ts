@@ -30,7 +30,7 @@ export type WithActionResultResponse<T> = WithActionResult<T>["response"];
  */
 export async function withActionResult<R>(
   fn: () => Promise<R>,
-  errorMessage: string
+  errorMessage: string,
 ): Promise<WithActionResult<R>> {
   try {
     const data = await fn();

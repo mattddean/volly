@@ -10,7 +10,7 @@ export class ReportableError extends Error {
 
   constructor(
     message: string,
-    { userMessage, noMonitor }: ReportableErrorOptions
+    { userMessage, noMonitor }: ReportableErrorOptions,
   ) {
     super(message);
     this.userMessage = userMessage;

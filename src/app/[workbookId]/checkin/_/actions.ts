@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { attendeeSetsTable, checkinsTable, usersTable } from "~/db/schema";
 import { db } from "~/db";
 import { withActionResult } from "~/lib/server-actions";
-import { CheckinSchema, checkinSchema } from "./schemas";
+import { type CheckinSchema, checkinSchema } from "./schemas";
 import { ReportableError } from "../../../../lib/errors/reportable-error";
 
 export async function checkin(data: CheckinSchema) {
@@ -30,7 +30,7 @@ export async function checkin(data: CheckinSchema) {
     const checkin = await db.query.checkinsTable.findFirst({
       where: and(
         eq(checkinsTable.attendeeSetId, attendeeSet.id),
-        eq(checkinsTable.userId, user.id)
+        eq(checkinsTable.userId, user.id),
       ),
     });
 

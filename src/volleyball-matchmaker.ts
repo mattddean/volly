@@ -1,6 +1,6 @@
-import { SelectGame, SelectUser } from "./db/schema";
+import type { SelectGame, SelectUser } from "./db/schema";
 import { Player } from "./models/player";
-import {
+import type {
   // loadPlayersFromCSV,
   // savePlayersToCSV,
   // loadGamesFromCSV,
@@ -29,21 +29,24 @@ export class VolleyballMatchmaker {
   constructor(
     allPlayers: SelectUser[],
     games: (SelectGame & { team1: SelectUser[]; team2: SelectUser[] })[],
-    attendingPlayers: SelectUser[]
+    attendingPlayers: SelectUser[],
   ) {
-    this.players = allPlayers.reduce((acc, player) => {
-      acc[player.id] = new Player(
-        player.id,
-        player.name,
-        player.skillGroup,
-        player.zScore,
-        player.sigma,
-        new Date(player.lastPlayed) // TODO: better date parsing
-      );
-      return acc;
-    }, {} as { [id: string]: Player });
+    this.players = allPlayers.reduce(
+      (acc, player) => {
+        acc[player.id] = new Player(
+          player.id,
+          player.name,
+          player.skillGroup,
+          player.zScore,
+          player.sigma,
+          new Date(player.lastPlayed), // TODO: better date parsing
+        );
+        return acc;
+      },
+      {} as { [id: string]: Player },
+    );
     this.attendingPlayers = attendingPlayers.map(
-      (player) => this.players[player.id]
+      (player) => this.players[player.id],
     );
 
     // Chemistry tracking
@@ -153,17 +156,14 @@ export class VolleyballMatchmaker {
   }
 
   // Create two balanced teams
-  createTeams(
-    teamSize: number = 6,
-    iterations: number = 500
-  ): [Player[], Player[]] {
+  createTeams(teamSize = 6, iterations = 500): [Player[], Player[]] {
     if (this.attendingPlayers.length < teamSize * 2) {
       console.log(
-        `Warning: Not enough players for two teams of size ${teamSize}`
+        `Warning: Not enough players for two teams of size ${teamSize}`,
       );
       teamSize = Math.min(
         teamSize,
-        Math.floor(this.attendingPlayers.length / 2)
+        Math.floor(this.attendingPlayers.length / 2),
       );
     }
 
@@ -173,7 +173,7 @@ export class VolleyballMatchmaker {
     // Determine how many players per team
     const playersPerTeam = Math.min(
       teamSize,
-      Math.floor(availablePlayers.length / 2)
+      Math.floor(availablePlayers.length / 2),
     );
 
     // Try multiple random combinations and keep the best one
@@ -203,7 +203,7 @@ export class VolleyballMatchmaker {
       bestTeams[1].sort((a, b) => b.weightedRating() - a.weightedRating());
 
       console.log(
-        `Created two teams with quality: ${bestQuality.toFixed(1)}/100`
+        `Created two teams with quality: ${bestQuality.toFixed(1)}/100`,
       );
       return bestTeams;
     }
@@ -217,10 +217,10 @@ export class VolleyballMatchmaker {
 
   // Create multiple balanced teams
   createMultipleTeams(
-    teamSize: number = 6,
+    teamSize = 6,
     numTeams: number | null = null,
-    iterations: number = 200,
-    scheduleRounds: number | null = null
+    iterations = 200,
+    scheduleRounds: number,
   ): Player[][] {
     const availablePlayers = [...this.attendingPlayers];
     const totalPlayers = availablePlayers.length;
@@ -244,7 +244,7 @@ export class VolleyballMatchmaker {
       console.log(
         `Warning: Not enough players for ${numTeams} teams with at least ${
           teamSize - 1
-        } players each`
+        } players each`,
       );
       // Reduce number of teams if necessary
       numTeams = Math.max(2, Math.floor(totalPlayers / (teamSize - 1)));
@@ -253,8 +253,8 @@ export class VolleyballMatchmaker {
 
     console.log(
       `Creating ${numTeams} teams with approximately ${Math.floor(
-        totalPlayers / numTeams
-      )} players each`
+        totalPlayers / numTeams,
+      )} players each`,
     );
 
     // Calculate player distribution
@@ -267,13 +267,13 @@ export class VolleyballMatchmaker {
       console.log(
         `Note: ${extraPlayers} teams will have ${
           baseSize + 1
-        } players, the rest will have ${baseSize}`
+        } players, the rest will have ${baseSize}`,
       );
     }
 
     // Optimization approach to create balanced teams
     let bestTeams: Player[][] | null = null;
-    let bestBalanceScore = Infinity; // Lower is better (less variance)
+    let bestBalanceScore = Number.POSITIVE_INFINITY; // Lower is better (less variance)
 
     for (let iter = 0; iter < iterations; iter++) {
       // Shuffle the players for this iteration
@@ -286,7 +286,7 @@ export class VolleyballMatchmaker {
       // Check if we can distribute A players evenly
       if (aTierPlayers.length > numTeams) {
         console.log(
-          `Warning: More A-tier players (${aTierPlayers.length}) than teams (${numTeams})!`
+          `Warning: More A-tier players (${aTierPlayers.length}) than teams (${numTeams})!`,
         );
       }
 
@@ -323,7 +323,7 @@ export class VolleyballMatchmaker {
           playerIndex + spotsNeeded <= nonAPlayers.length
         ) {
           teams[i].push(
-            ...nonAPlayers.slice(playerIndex, playerIndex + spotsNeeded)
+            ...nonAPlayers.slice(playerIndex, playerIndex + spotsNeeded),
           );
           playerIndex += spotsNeeded;
         }
@@ -347,7 +347,7 @@ export class VolleyballMatchmaker {
           // For smaller teams, add "virtual players" at the global average rating
           const totalRating = team.reduce(
             (sum, p) => sum + p.weightedRating(),
-            0
+            0,
           );
           const missingPlayers = teamSize - team.length;
           const normalizedRating =
@@ -376,7 +376,7 @@ export class VolleyballMatchmaker {
 
       // Calculate team chemistry factor
       const avgChemistry = average(
-        teams.map((team) => this.teamChemistryScore(team))
+        teams.map((team) => this.teamChemistryScore(team)),
       );
 
       // Combined balance score (heavily weighted towards rating balance)
@@ -411,7 +411,7 @@ export class VolleyballMatchmaker {
         const currentTeamSize = baseSize + (i < extraPlayers ? 1 : 0);
         const team = availablePlayers.slice(
           playerIndex,
-          playerIndex + currentTeamSize
+          playerIndex + currentTeamSize,
         );
         teams.push(team);
         playerIndex += currentTeamSize;
@@ -441,7 +441,7 @@ export class VolleyballMatchmaker {
       } else {
         const totalRating = team.reduce(
           (sum, p) => sum + p.weightedRating(),
-          0
+          0,
         );
         const missingPlayers = teamSize - team.length;
         normRating =
@@ -456,8 +456,8 @@ export class VolleyballMatchmaker {
           team.length
         } players) - Avg Rating: ${teamSkill.toFixed(1)}, ` +
           `Normalized: ${normRating.toFixed(1)}, Chemistry: ${teamChem.toFixed(
-            1
-          )}`
+            1,
+          )}`,
       );
     }
 
@@ -468,99 +468,99 @@ export class VolleyballMatchmaker {
     console.log("\nTeam Balance Statistics:");
     console.log(
       `  Normalized Rating Range: ${Math.min(...normalizedRatings).toFixed(
-        1
+        1,
       )} - ${Math.max(...normalizedRatings).toFixed(
-        1
-      )} (spread: ${ratingRange.toFixed(1)})`
+        1,
+      )} (spread: ${ratingRange.toFixed(1)})`,
     );
     console.log(`  Normalized Rating Variance: ${ratingVariance.toFixed(2)}`);
     console.log(`  Perfect Balance: ${ratingRange < 5.0 ? "Yes" : "No"}`);
 
     // Create a match schedule if requested
-    if (scheduleRounds !== null && scheduleRounds > 0) {
-      // Create the schedule first
-      const schedule = this.createMatchSchedule(bestTeams, scheduleRounds);
-      // Then display it with normalized ratings
-      this.displayMatchSchedule(bestTeams, schedule, normalizedRatings);
-    } else {
-      // Create matchups showing normalized ratings
-      console.log("\nRecommended Matchups:");
-      const optimalMatchups = this.createOptimalMatchups(bestTeams);
+    // Create the schedule first
+    const schedule = this.createMatchSchedule(bestTeams, scheduleRounds);
+    // Then display it with normalized ratings
+    this.displayMatchSchedule(bestTeams, schedule, normalizedRatings);
 
-      for (let i = 0; i < optimalMatchups.length; i++) {
-        const [team1Idx, team2Idx] = optimalMatchups[i];
-        const team1 = bestTeams[team1Idx];
-        const team2 = bestTeams[team2Idx];
-        const quality = this.predictMatchQuality(team1, team2);
-        const team1Rating = teamRatings[team1Idx];
-        const team2Rating = teamRatings[team2Idx];
-        const team1Norm = normalizedRatings[team1Idx];
-        const team2Norm = normalizedRatings[team2Idx];
-        const ratingDiff = Math.abs(team1Norm - team2Norm);
+    // else {
+    //   // Create matchups showing normalized ratings
+    //   console.log("\nRecommended Matchups:");
+    //   const optimalMatchups = this.createOptimalMatchups(bestTeams);
 
-        console.log(
-          `Match ${i + 1}: Team ${team1Idx + 1} (${
-            team1.length
-          } players, ${team1Rating.toFixed(1)}/${team1Norm.toFixed(
-            1
-          )} norm) vs ` +
-            `Team ${team2Idx + 1} (${
-              team2.length
-            } players, ${team2Rating.toFixed(1)}/${team2Norm.toFixed(
-              1
-            )} norm) - ` +
-            `Norm Diff: ${ratingDiff.toFixed(1)}, Quality: ${quality.toFixed(
-              1
-            )}/100`
-        );
-      }
+    //   for (let i = 0; i < optimalMatchups.length; i++) {
+    //     const [team1Idx, team2Idx] = optimalMatchups[i];
+    //     const team1 = bestTeams[team1Idx];
+    //     const team2 = bestTeams[team2Idx];
+    //     const quality = this.predictMatchQuality(team1, team2);
+    //     const team1Rating = teamRatings[team1Idx];
+    //     const team2Rating = teamRatings[team2Idx];
+    //     const team1Norm = normalizedRatings[team1Idx];
+    //     const team2Norm = normalizedRatings[team2Idx];
+    //     const ratingDiff = Math.abs(team1Norm - team2Norm);
 
-      // Also show all possible matchups for reference
-      console.log("\nAll Possible Matchups (Sorted by Quality):");
-      const allMatchups: [number, number, number][] = [];
+    //     console.log(
+    //       `Match ${i + 1}: Team ${team1Idx + 1} (${
+    //         team1.length
+    //       } players, ${team1Rating.toFixed(1)}/${team1Norm.toFixed(
+    //         1
+    //       )} norm) vs ` +
+    //         `Team ${team2Idx + 1} (${
+    //           team2.length
+    //         } players, ${team2Rating.toFixed(1)}/${team2Norm.toFixed(
+    //           1
+    //         )} norm) - ` +
+    //         `Norm Diff: ${ratingDiff.toFixed(1)}, Quality: ${quality.toFixed(
+    //           1
+    //         )}/100`
+    //     );
+    //   }
 
-      for (let i = 0; i < bestTeams.length; i++) {
-        for (let j = i + 1; j < bestTeams.length; j++) {
-          const quality = this.predictMatchQuality(bestTeams[i], bestTeams[j]);
-          const ratingDiff = Math.abs(
-            normalizedRatings[i] - normalizedRatings[j]
-          );
-          allMatchups.push([i, j, quality]);
-        }
-      }
+    //   // Also show all possible matchups for reference
+    //   console.log("\nAll Possible Matchups (Sorted by Quality):");
+    //   const allMatchups: [number, number, number][] = [];
 
-      // Sort by quality (highest first)
-      allMatchups.sort((a, b) => b[2] - a[2]);
+    //   for (let i = 0; i < bestTeams.length; i++) {
+    //     for (let j = i + 1; j < bestTeams.length; j++) {
+    //       const quality = this.predictMatchQuality(bestTeams[i], bestTeams[j]);
+    //       const ratingDiff = Math.abs(
+    //         normalizedRatings[i] - normalizedRatings[j]
+    //       );
+    //       allMatchups.push([i, j, quality]);
+    //     }
+    //   }
 
-      for (const [team1Idx, team2Idx, quality] of allMatchups) {
-        const ratingDiff = Math.abs(
-          normalizedRatings[team1Idx] - normalizedRatings[team2Idx]
-        );
-        console.log(
-          `Team ${team1Idx + 1} vs Team ${
-            team2Idx + 1
-          }: Diff ${ratingDiff.toFixed(1)}, Quality ${quality.toFixed(1)}/100`
-        );
-      }
+    //   // Sort by quality (highest first)
+    //   allMatchups.sort((a, b) => b[2] - a[2]);
 
-      // Show team compositions
-      for (let i = 0; i < bestTeams.length; i++) {
-        const team = bestTeams[i];
-        console.log(`\nTeam ${i + 1}:`);
+    //   for (const [team1Idx, team2Idx, quality] of allMatchups) {
+    //     const ratingDiff = Math.abs(
+    //       normalizedRatings[team1Idx] - normalizedRatings[team2Idx]
+    //     );
+    //     console.log(
+    //       `Team ${team1Idx + 1} vs Team ${
+    //         team2Idx + 1
+    //       }: Diff ${ratingDiff.toFixed(1)}, Quality ${quality.toFixed(1)}/100`
+    //     );
+    //   }
 
-        for (const player of team) {
-          console.log(`  ${player.toString()}`);
-        }
+    //   // Show team compositions
+    //   for (let i = 0; i < bestTeams.length; i++) {
+    //     const team = bestTeams[i];
+    //     console.log(`\nTeam ${i + 1}:`);
 
-        const teamRating = calculateTeamRating(team);
-        const teamChem = this.teamChemistryScore(team);
-        console.log(
-          `  Team Average: Rating ${teamRating.toFixed(
-            1
-          )}, Chemistry ${teamChem.toFixed(1)}`
-        );
-      }
-    }
+    //     for (const player of team) {
+    //       console.log(`  ${player.toString()}`);
+    //     }
+
+    //     const teamRating = calculateTeamRating(team);
+    //     const teamChem = this.teamChemistryScore(team);
+    //     console.log(
+    //       `  Team Average: Rating ${teamRating.toFixed(
+    //         1
+    //       )}, Chemistry ${teamChem.toFixed(1)}`
+    //     );
+    //   }
+    // }
 
     return bestTeams;
   }
@@ -633,7 +633,7 @@ export class VolleyballMatchmaker {
   // Create a match schedule
   createMatchSchedule(
     teams: Player[][],
-    numRounds: number
+    numRounds: number,
   ): [number, number][][] {
     const numTeams = teams.length;
 
@@ -704,7 +704,7 @@ export class VolleyballMatchmaker {
       for (const [team1Idx, team2Idx] of schedule[roundIdx]) {
         const quality = this.predictMatchQuality(
           teams[team1Idx],
-          teams[team2Idx]
+          teams[team2Idx],
         );
         matchupsWithQuality.push([team1Idx, team2Idx, quality]);
       }
@@ -714,7 +714,7 @@ export class VolleyballMatchmaker {
 
       // Update schedule with sorted matchups
       schedule[roundIdx] = matchupsWithQuality.map(
-        (m) => [m[0], m[1]] as [number, number]
+        (m) => [m[0], m[1]] as [number, number],
       );
     }
 
@@ -722,10 +722,85 @@ export class VolleyballMatchmaker {
   }
 
   // Display match schedule
+  collectMatchSchedule(
+    teams: Player[][],
+    schedule: [number, number][][],
+    normalizedRatings: number[] | null = null,
+  ): void {
+    console.log("\n===== FULL MATCH SCHEDULE =====");
+
+    const matchups = [];
+
+    for (let roundIdx = 0; roundIdx < schedule.length; roundIdx++) {
+      console.log(`\nROUND ${roundIdx + 1}:`);
+
+      for (let matchIdx = 0; matchIdx < schedule[roundIdx].length; matchIdx++) {
+        const [team1Idx, team2Idx] = schedule[roundIdx][matchIdx];
+        const team1 = teams[team1Idx];
+        const team2 = teams[team2Idx];
+        const quality = this.predictMatchQuality(team1, team2);
+
+        const team1Skill = calculateTeamRating(team1);
+        const team2Skill = calculateTeamRating(team2);
+
+        const team1Norm = normalizedRatings?.[team1Idx];
+        const team2Norm = normalizedRatings?.[team2Idx];
+        const ratingDiff =
+          team1Norm && team2Norm ? Math.abs(team1Norm - team2Norm) : null;
+
+        matchups.push({
+          team1,
+          team2,
+          quality,
+          team1Skill,
+          team2Skill,
+          team1Norm,
+          team2Norm,
+          ratingDiff,
+        });
+
+        if (normalizedRatings) {
+          const team1Norm = normalizedRatings[team1Idx];
+          const team2Norm = normalizedRatings[team2Idx];
+          const ratingDiff = Math.abs(team1Norm - team2Norm);
+          console.log(
+            `  Match ${matchIdx + 1}: Team ${team1Idx + 1} (${
+              team1.length
+            } players, ${team1Skill.toFixed(1)}/${team1Norm.toFixed(
+              1,
+            )} norm) vs ` +
+              `Team ${team2Idx + 1} (${
+                team2.length
+              } players, ${team2Skill.toFixed(1)}/${team2Norm.toFixed(
+                1,
+              )} norm) - ` +
+              `Norm Diff: ${ratingDiff.toFixed(1)}, Quality: ${quality.toFixed(
+                1,
+              )}/100`,
+          );
+        } else {
+          const ratingDiff = Math.abs(team1Skill - team2Skill);
+          console.log(
+            `  Match ${matchIdx + 1}: Team ${team1Idx + 1} (${
+              team1.length
+            } players, ${team1Skill.toFixed(1)}) vs ` +
+              `Team ${team2Idx + 1} (${
+                team2.length
+              } players, ${team2Skill.toFixed(1)}) - ` +
+              `Diff: ${ratingDiff.toFixed(1)}, Quality: ${quality.toFixed(
+                1,
+              )}/100`,
+          );
+        }
+      }
+    }
+  }
+
+  // Display match schedule
   displayMatchSchedule(
     teams: Player[][],
     schedule: [number, number][][],
-    normalizedRatings: number[] | null = null
+    normalizedRatings: number[] | null = null,
   ): void {
     console.log("\n===== FULL MATCH SCHEDULE =====");
 
@@ -749,16 +824,16 @@ export class VolleyballMatchmaker {
             `  Match ${matchIdx + 1}: Team ${team1Idx + 1} (${
               team1.length
             } players, ${team1Skill.toFixed(1)}/${team1Norm.toFixed(
-              1
+              1,
             )} norm) vs ` +
               `Team ${team2Idx + 1} (${
                 team2.length
               } players, ${team2Skill.toFixed(1)}/${team2Norm.toFixed(
-                1
+                1,
               )} norm) - ` +
               `Norm Diff: ${ratingDiff.toFixed(1)}, Quality: ${quality.toFixed(
-                1
-              )}/100`
+                1,
+              )}/100`,
           );
         } else {
           const ratingDiff = Math.abs(team1Skill - team2Skill);
@@ -770,8 +845,8 @@ export class VolleyballMatchmaker {
                 team2.length
               } players, ${team2Skill.toFixed(1)}) - ` +
               `Diff: ${ratingDiff.toFixed(1)}, Quality: ${quality.toFixed(
-                1
-              )}/100`
+                1,
+              )}/100`,
           );
         }
       }
@@ -784,7 +859,7 @@ export class VolleyballMatchmaker {
     team2: Player[],
     score1: number,
     score2: number,
-    date: Date = new Date()
+    date: Date = new Date(),
   ): void {
     // Determine the winning team
     const team1Win = score1 > score2;
@@ -843,7 +918,7 @@ export class VolleyballMatchmaker {
       // Update uncertainty (reduce sigma as we gain information)
       player.sigma = Math.max(
         10,
-        player.sigma * (1 - 0.01 * this.uncertaintyFactor)
+        player.sigma * (1 - 0.01 * this.uncertaintyFactor),
       );
     }
 
@@ -860,7 +935,7 @@ export class VolleyballMatchmaker {
       // Update uncertainty (reduce sigma as we gain information)
       player.sigma = Math.max(
         10,
-        player.sigma * (1 - 0.01 * this.uncertaintyFactor)
+        player.sigma * (1 - 0.01 * this.uncertaintyFactor),
       );
     }
 
@@ -903,10 +978,7 @@ export class VolleyballMatchmaker {
   }
 
   // Reset all player stats
-  resetPlayerStats(
-    resetAll: boolean = false,
-    playerName: string | null = null
-  ): void {
+  resetPlayerStats(resetAll = false, playerName: string | null = null): void {
     if (resetAll) {
       for (const name in this.players) {
         const player = this.players[name];
@@ -942,7 +1014,7 @@ export class VolleyballMatchmaker {
   adjustPlayer(
     playerName: string,
     newSkillGroup: string | null = null,
-    newRating: number | null = null
+    newRating: number | null = null,
   ): void {
     if (!(playerName in this.players)) {
       console.log(`Player '${playerName}' not found.`);

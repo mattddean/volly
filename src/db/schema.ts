@@ -41,11 +41,11 @@ export const checkinsTable = sqliteTable(
   {
     id: integer("id").primaryKey(),
     attendeeSetId: integer("attendee_set_id").references(
-      () => attendeeSetsTable.id
+      () => attendeeSetsTable.id,
     ),
     userId: integer("user_id").references(() => usersTable.id),
   },
-  (t) => [unique().on(t.attendeeSetId, t.userId)]
+  (t) => [unique().on(t.attendeeSetId, t.userId)],
 );
 
 export const teamsUsersTable = sqliteTable("teams_users", {
@@ -117,7 +117,7 @@ export const attendeeSetsRelations = relations(
   attendeeSetsTable,
   ({ many }) => ({
     checkins: many(checkinsTable),
-  })
+  }),
 );
 
 export const checkinsRelations = relations(checkinsTable, ({ one }) => ({

@@ -1,7 +1,7 @@
 import inquirer from "inquirer";
 import { VolleyballMatchmaker } from "./volleyball-matchmaker";
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import chalk from "chalk";
 import { Player } from "./models/player";
 
@@ -20,7 +20,7 @@ const attendanceFile = path.join(dataDir, "attendance.csv");
 const matchmaker = new VolleyballMatchmaker(
   playerFile,
   gameFile,
-  attendanceFile
+  attendanceFile,
 );
 
 // Main menu function
@@ -45,7 +45,7 @@ async function mainMenu() {
     },
   ]);
 
-  const option = parseInt(choice.split(".")[0]);
+  const option = Number.parseInt(choice.split(".")[0]);
 
   switch (option) {
     case 1:
@@ -105,8 +105,8 @@ async function loadAttendingPlayers() {
     } else {
       console.log(
         chalk.green(
-          `\nLoaded ${matchmaker.attendingPlayers.length} attending players.`
-        )
+          `\nLoaded ${matchmaker.attendingPlayers.length} attending players.`,
+        ),
       );
       console.log("\nAttending players:");
       matchmaker.attendingPlayers.forEach((player) => {
@@ -135,7 +135,7 @@ async function addAttendingPlayers() {
 
   fs.writeFileSync(attendanceFile, uniqueNames.join("\n"));
   console.log(
-    chalk.green(`Added ${uniqueNames.length} players to attendance list.`)
+    chalk.green(`Added ${uniqueNames.length} players to attendance list.`),
   );
 
   // Reload attending players
@@ -147,8 +147,8 @@ async function createTwoTeams() {
   if (matchmaker.attendingPlayers.length < 4) {
     console.log(
       chalk.yellow(
-        "\nNot enough attending players. Please load at least 4 players."
-      )
+        "\nNot enough attending players. Please load at least 4 players.",
+      ),
     );
     return;
   }
@@ -180,7 +180,7 @@ async function createTwoTeams() {
     console.log(`- ${player.toString()}`);
   });
   console.log(
-    `Average Rating: ${matchmaker.calculateTeamRating(team1).toFixed(1)}`
+    `Average Rating: ${matchmaker.calculateTeamRating(team1).toFixed(1)}`,
   );
   console.log(`Chemistry: ${matchmaker.teamChemistryScore(team1).toFixed(1)}`);
 
@@ -189,13 +189,13 @@ async function createTwoTeams() {
     console.log(`- ${player.toString()}`);
   });
   console.log(
-    `Average Rating: ${matchmaker.calculateTeamRating(team2).toFixed(1)}`
+    `Average Rating: ${matchmaker.calculateTeamRating(team2).toFixed(1)}`,
   );
   console.log(`Chemistry: ${matchmaker.teamChemistryScore(team2).toFixed(1)}`);
 
   const quality = matchmaker.predictMatchQuality(team1, team2);
   console.log(
-    chalk.magenta(`\nPredicted Match Quality: ${quality.toFixed(1)}/100`)
+    chalk.magenta(`\nPredicted Match Quality: ${quality.toFixed(1)}/100`),
   );
 }
 
@@ -204,8 +204,8 @@ async function createMultipleTeams() {
   if (matchmaker.attendingPlayers.length < 6) {
     console.log(
       chalk.yellow(
-        "\nNot enough attending players. Please load at least 6 players."
-      )
+        "\nNot enough attending players. Please load at least 6 players.",
+      ),
     );
     return;
   }
@@ -239,15 +239,16 @@ async function createMultipleTeams() {
       },
     ]);
 
-  const numTeamsValue = numTeams.trim() === "" ? null : parseInt(numTeams);
+  const numTeamsValue =
+    numTeams.trim() === "" ? null : Number.parseInt(numTeams);
   const scheduleRoundsValue =
-    scheduleRounds.trim() === "" ? null : parseInt(scheduleRounds);
+    scheduleRounds.trim() === "" ? null : Number.parseInt(scheduleRounds);
 
   matchmaker.createMultipleTeams(
     teamSize,
     numTeamsValue,
     iterations,
-    scheduleRoundsValue
+    scheduleRoundsValue,
   );
 }
 
@@ -256,8 +257,8 @@ async function recordGameResult() {
   if (matchmaker.attendingPlayers.length < 4) {
     console.log(
       chalk.yellow(
-        "\nNot enough attending players. Please load at least 4 players."
-      )
+        "\nNot enough attending players. Please load at least 4 players.",
+      ),
     );
     return;
   }
@@ -281,7 +282,7 @@ async function recordGameResult() {
 
   // Get remaining players for team 2
   const remainingPlayers = playerNames.filter(
-    (name) => !team1Names.includes(name)
+    (name) => !team1Names.includes(name),
   );
 
   const { team2Names } = await inquirer.prompt<{ team2Names: string[] }>([
@@ -366,8 +367,8 @@ async function manualPlayerAdjustment() {
       matchmaker.savePlayers();
       console.log(
         chalk.green(
-          `Created new player: ${matchmaker.players[playerName].toString()}`
-        )
+          `Created new player: ${matchmaker.players[playerName].toString()}`,
+        ),
       );
     }
 
@@ -505,7 +506,7 @@ async function resetPlayerStats() {
         type: "confirm",
         name: "confirm",
         message: chalk.red(
-          "WARNING: This will reset ALL player statistics to default. Are you sure?"
+          "WARNING: This will reset ALL player statistics to default. Are you sure?",
         ),
         default: false,
       },

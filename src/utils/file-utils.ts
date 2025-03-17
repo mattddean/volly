@@ -1,5 +1,4 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
 import Papa from "papaparse";
 import { Player } from "../models/player";
 
@@ -41,7 +40,7 @@ export function loadPlayersFromCSV(filePath: string): {
 // Save players to CSV file
 export function savePlayersToCSV(
   players: { [key: string]: Player },
-  filePath: string
+  filePath: string,
 ): void {
   const playerArray = Object.values(players).map((player) => player.toObject());
 
@@ -75,8 +74,8 @@ export function loadGamesFromCSV(filePath: string): GameRecord[] {
         date: row.date,
         team1: JSON.parse(row.team1 || "[]"),
         team2: JSON.parse(row.team2 || "[]"),
-        score1: parseInt(row.score1),
-        score2: parseInt(row.score2),
+        score1: Number.parseInt(row.score1),
+        score2: Number.parseInt(row.score2),
       };
       games.push(game);
     }
@@ -127,7 +126,7 @@ export function loadAttendanceFromCSV(filePath: string): string[] {
 // Save attendance list to CSV
 export function saveAttendanceToCSV(
   attendees: string[],
-  filePath: string
+  filePath: string,
 ): void {
   const csvRows = attendees.map((name) => [name]);
   const csv = Papa.unparse(csvRows);
