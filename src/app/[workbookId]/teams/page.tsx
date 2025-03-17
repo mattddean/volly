@@ -34,5 +34,5 @@ export default async function TeamsPage({
     ),
   });
 
-  return <GenerateTeamsForm users={users} />;
+  return <GenerateTeamsForm />;
 }

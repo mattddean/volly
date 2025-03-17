@@ -44,8 +44,8 @@ export class Player {
     this.skillGroupRating = this._getSkillGroupBaseRating();
   }
 
-  public _getSkillGroupBaseRating(): number {
-    const skillMap: { [key: string]: number } = {
+  static getSkillMap(): { [key: string]: number } {
+    return {
       A: 160.0,
       B: 120.0,
       C: 100.0,
@@ -53,6 +53,10 @@ export class Player {
       E: 40.0,
       F: 0.0,
     };
+  }
+
+  public _getSkillGroupBaseRating(): number {
+    const skillMap = Player.getSkillMap();
     return skillMap[this.skillGroup] || 100.0;
   }
 
