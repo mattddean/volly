@@ -1,15 +1,16 @@
+import { SelectGame, SelectUser } from "./db/schema";
 import { Player } from "./models/player";
 import {
-  loadPlayersFromCSV,
-  savePlayersToCSV,
-  loadGamesFromCSV,
-  saveGamesToCSV,
-  loadAttendanceFromCSV,
-  saveAttendanceToCSV,
+  // loadPlayersFromCSV,
+  // savePlayersToCSV,
+  // loadGamesFromCSV,
+  // saveGamesToCSV,
+  // loadAttendanceFromCSV,
+  // saveAttendanceToCSV,
   GameRecord,
 } from "./utils/file-utils";
 import {
-  standardDeviation,
+  // standardDeviation,
   average,
   calculateTeamRating,
   calculateTeamChemistry,
@@ -17,23 +18,32 @@ import {
 import { format } from "date-fns";
 
 export class VolleyballMatchmaker {
-  players: { [key: string]: Player };
+  players: { [id: string]: Player };
   attendingPlayers: Player[];
-  playerFile: string;
-  gameFile: string;
-  attendanceFile: string;
   pairPerformances: { [key: string]: number[] };
   historicalGames: GameRecord[];
   beta: number;
   dynamicFactor: number;
   uncertaintyFactor: number;
 
-  constructor(playerFile: string, gameFile: string, attendanceFile: string) {
-    this.playerFile = playerFile;
-    this.gameFile = gameFile;
-    this.attendanceFile = attendanceFile;
-    this.players = {};
-    this.attendingPlayers = [];
+  constructor(
+    allPlayers: SelectUser[],
+    games: (SelectGame & { team1: SelectUser[]; team2: SelectUser[] })[],
+    attendingPlayers: SelectUser[]
+  ) {
+    this.players = allPlayers.reduce((acc, player) => {
+      acc[player.id] = new Player(
+        player.name,
+        player.skillGroup,
+        player.zScore,
+        player.sigma,
+        new Date(player.lastPlayed) // TODO: better date parsing
+      );
+      return acc;
+    }, {} as { [id: string]: Player });
+    this.attendingPlayers = attendingPlayers.map(
+      (player) => this.players[player.id]
+    );
 
     // Chemistry tracking
     this.pairPerformances = {};
@@ -44,59 +54,65 @@ export class VolleyballMatchmaker {
     this.uncertaintyFactor = 0.5; // How much uncertainty to maintain in the system
 
     // Historical game data
-    this.historicalGames = [];
+    this.historicalGames = games.map((game) => ({
+      team1: game.team1.map((player) => player.name), // TODO: use player ids
+      team2: game.team2.map((player) => player.name), // TODO: use player ids
+      score1: game.team1Score,
+      score2: game.team2Score,
+      date: game.date,
+    }));
 
     // Load existing player data and game history
-    this.loadPlayers();
-    this.loadGames();
+    // this.loadPlayers();
+    // this.loadGames();
   }
 
-  // Load player data from file
-  loadPlayers(): void {
-    this.players = loadPlayersFromCSV(this.playerFile);
-    console.log(
-      `Loaded ${Object.keys(this.players).length} players from system.`
-    );
-  }
+  // // Load player data from file
+  // loadPlayers(): void {
+  //   this.players = loadPlayersFromCSV(this.playerFile);
+  //   console.log(
+  //     `Loaded ${Object.keys(this.players).length} players from system.`
+  //   );
+  // }
 
-  // Save player data to file
-  savePlayers(): void {
-    savePlayersToCSV(this.players, this.playerFile);
-  }
+  // // Save player data to file
+  // savePlayers(): void {
+  //   savePlayersToCSV(this.players, this.playerFile);
+  // }
 
-  // Load game history
-  loadGames(): void {
-    this.historicalGames = loadGamesFromCSV(this.gameFile);
-    console.log(`Loaded ${this.historicalGames.length} historical games.`);
-  }
+  // // Load game history
+  // loadGames(): void {
+  //   this.historicalGames = loadGamesFromCSV(this.gameFile);
+  //   console.log(`Loaded ${this.historicalGames.length} historical games.`);
+  // }
 
-  // Save game history
-  saveGames(): void {
-    saveGamesToCSV(this.historicalGames, this.gameFile);
-  }
+  // // Save game history
+  // saveGames(): void {
+  //   saveGamesToCSV(this.historicalGames, this.gameFile);
+  // }
 
-  // Load attending players from file
-  loadAttendingPlayers(): void {
-    const attendees = loadAttendanceFromCSV(this.attendanceFile);
-    this.attendingPlayers = [];
+  // // Load attending players from file
+  // loadAttendingPlayers(): void {
+  //   const attendees = loadAttendanceFromCSV(this.attendanceFile);
+  //   this.attendingPlayers = [];
 
-    let newPlayers = 0;
-    for (const name of attendees) {
-      if (name in this.players) {
-        this.attendingPlayers.push(this.players[name]);
-      } else {
-        // Create new player with default skill group C
-        const newPlayer = new Player(name, "C");
-        this.players[name] = newPlayer;
-        this.attendingPlayers.push(newPlayer);
-        newPlayers++;
-      }
-    }
+  //   let newPlayers = 0;
+  //   for (const name of attendees) {
+  //     if (name in this.players) {
+  //       this.attendingPlayers.push(this.players[name]);
+  //     } else {
+  //       // Create new player with default skill group C
+  //       const newPlayer = new Player(name, "C");
+  //       this.players[name] = newPlayer;
+  //       this.attendingPlayers.push(newPlayer);
+  //       newPlayers++;
+  //     }
+  //   }
 
-    console.log(
-      `Loaded ${this.attendingPlayers.length} attending players (${newPlayers} new).`
-    );
-  }
+  //   console.log(
+  //     `Loaded ${this.attendingPlayers.length} attending players (${newPlayers} new).`
+  //   );
+  // }
 
   // Get team chemistry score
   teamChemistryScore(team: Player[]): number {
@@ -879,8 +895,8 @@ export class VolleyballMatchmaker {
     };
 
     this.historicalGames.push(gameRecord);
-    this.saveGames();
-    this.savePlayers();
+    // this.saveGames();
+    // this.savePlayers();
 
     console.log("\nGame result recorded and player ratings updated.");
   }
@@ -918,7 +934,7 @@ export class VolleyballMatchmaker {
       }
     }
 
-    this.savePlayers();
+    // this.savePlayers();
   }
 
   // Manually adjust player ratings or skill groups
@@ -958,7 +974,7 @@ export class VolleyballMatchmaker {
 
     if (isChanged) {
       console.log(`Player ${playerName} updated to: ${player.toString()}`);
-      this.savePlayers();
+      // this.savePlayers();
     }
   }
 
