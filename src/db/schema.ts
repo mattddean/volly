@@ -82,6 +82,7 @@ export const matchupsTable = sqliteTable("matchups", {
   workbookId: integer("workbook_id")
     .notNull()
     .references(() => workbooksTable.id),
+  roundNumber: integer("round_number"),
 });
 
 export const gamesTable = sqliteTable("games", {
@@ -158,6 +159,9 @@ export type SelectUser = typeof usersTable.$inferSelect;
 
 export type InsertTeam = typeof teamsTable.$inferInsert;
 export type SelectTeam = typeof teamsTable.$inferSelect;
+
+export type InsertTeamUser = typeof teamsUsersTable.$inferInsert;
+export type SelectTeamUser = typeof teamsUsersTable.$inferSelect;
 
 export type InsertMatchup = typeof matchupsTable.$inferInsert;
 export type SelectMatchup = typeof matchupsTable.$inferSelect;

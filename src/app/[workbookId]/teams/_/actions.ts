@@ -9,6 +9,7 @@ import {
   teamsTable,
   teamsUsersTable,
   usersTable,
+  matchupsTable,
 } from "~/db/schema";
 import { withActionResult } from "~/lib/server-actions";
 import { VolleyballMatchmaker } from "~/volleyball-matchmaker";
@@ -73,10 +74,21 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
       validatedData.scheduleRounds,
     );
 
+    // Generate match schedule for these teams
+    const schedule = matchmaker.createMatchSchedule(
+      teams,
+      validatedData.scheduleRounds,
+    );
+
     // delete all existing teams
     await db
       .delete(teamsTable)
       .where(eq(teamsTable.workbookId, Number(validatedData.workbookId)));
+
+    // delete all existing matchups for this workbook
+    await db
+      .delete(matchupsTable)
+      .where(eq(matchupsTable.workbookId, Number(validatedData.workbookId)));
 
     // create enough blank teams
     const ts = await db
@@ -101,10 +113,26 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
       );
     }
 
+    // Create matchups in the database
+    if (schedule && schedule.length > 0) {
+      for (let roundIdx = 0; roundIdx < schedule.length; roundIdx++) {
+        const round = schedule[roundIdx];
+        for (const [team1Idx, team2Idx] of round) {
+          await db.insert(matchupsTable).values({
+            team1Id: ts[team1Idx].id,
+            team2Id: ts[team2Idx].id,
+            workbookId: Number(validatedData.workbookId),
+            roundNumber: roundIdx + 1,
+          });
+        }
+      }
+    }
+
     revalidatePath(`${validatedData.workbookId}/teams`);
 
     return {
       numTeams: teams.length,
+      hasMatchups: schedule && schedule.length > 0,
     };
   }, "Unable to create teams and matchups");
 
