@@ -13,7 +13,7 @@ export default async function TeamsPage({
   return (
     <div className="flex flex-col gap-y-12 px-16">
       <div className="h-12" />
-      <GenerateTeamsForm>
+      <GenerateTeamsForm workbookId={workbookId}>
         <Suspense
           fallback={
             <div className="size-full flex items-center justify-center">

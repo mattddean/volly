@@ -15,13 +15,11 @@ import { VolleyballMatchmaker } from "~/volleyball-matchmaker";
 import { type GenerateTeamsSchema, generateTeamsSchema } from "./schemas";
 
 export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
-  const workbookId = 1; // TODO: real workbook id
-
   const result = await withActionResult(async () => {
     const validatedData = generateTeamsSchema.parse(data);
 
     const attendeeSet = await db.query.attendeeSetsTable.findFirst({
-      where: eq(attendeeSetsTable.workbookId, Number(workbookId)),
+      where: eq(attendeeSetsTable.workbookId, Number(validatedData.workbookId)),
     });
 
     const checkins = await db.query.checkinsTable.findMany({
@@ -73,7 +71,9 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
     );
 
     // delete all existing teams
-    await db.delete(teamsTable).where(eq(teamsTable.workbookId, workbookId));
+    await db
+      .delete(teamsTable)
+      .where(eq(teamsTable.workbookId, Number(validatedData.workbookId)));
 
     // create enough blank teams
     const ts = await db
@@ -81,7 +81,7 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
       .values(
         teams.map((_player, index) => ({
           name: `Team ${index + 1}`,
-          workbookId,
+          workbookId: Number(validatedData.workbookId),
         })),
       )
       .returning();
@@ -97,10 +97,8 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
       );
     }
 
-    revalidatePath(`${workbookId}/teams`);
+    revalidatePath(`${validatedData.workbookId}/teams`);
   }, "Unable to create teams and matchups");
-
-  if (result.error) return result.response;
 
   return result.response;
 }

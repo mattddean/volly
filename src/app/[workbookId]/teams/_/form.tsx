@@ -17,12 +17,16 @@ import { toast } from "~/components/ui/sonner";
 import { useTransition, type ReactNode } from "react";
 import { Loader2Icon } from "lucide-react";
 
-export function GenerateTeamsForm({ children }: { children: ReactNode }) {
+export function GenerateTeamsForm({
+  children,
+  workbookId,
+}: { children: ReactNode; workbookId: string }) {
   const form = useForm<GenerateTeamsSchema>({
     resolver: zodResolver(generateTeamsSchema),
     defaultValues: {
       teamSize: 6,
       scheduleRounds: 3,
+      workbookId,
     },
   });
 
@@ -51,6 +55,7 @@ export function GenerateTeamsForm({ children }: { children: ReactNode }) {
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="scheduleRounds"
@@ -63,7 +68,10 @@ export function GenerateTeamsForm({ children }: { children: ReactNode }) {
               )}
             />
 
-            <Button>Generate Teams</Button>
+            <Button>
+              Generate Teams
+              {isPending && <Loader2Icon className="size-4 animate-spin" />}
+            </Button>
           </form>
         </div>
       </Form>
