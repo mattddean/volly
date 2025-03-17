@@ -111,7 +111,7 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
   return result.response;
 }
 
-export async function moveToTeam({
+export async function moveToTeamAction({
   workbookId,
   userId,
   newTeamId,
@@ -137,7 +137,7 @@ export async function moveToTeam({
   return result.response;
 }
 
-export async function removeFromTeamAndCheckOut({
+export async function removeFromTeamAndCheckOutAction({
   workbookId,
   userId,
 }: {

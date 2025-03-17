@@ -478,9 +478,6 @@ export class VolleyballMatchmaker {
 
     // Create a match schedule if requested
     // Create the schedule first
-    const schedule = this.createMatchSchedule(bestTeams, scheduleRounds);
-    // Then display it with normalized ratings
-    this.displayMatchSchedule(bestTeams, schedule, normalizedRatings);
 
     // else {
     //   // Create matchups showing normalized ratings

@@ -3,7 +3,7 @@
 import type { SelectTeam, SelectUser } from "~/db/schema";
 import { Button } from "~/components/ui/button";
 import { useTransition } from "react";
-import { moveToTeam, removeFromTeamAndCheckOut } from "./actions";
+import { moveToTeamAction, removeFromTeamAndCheckOutAction } from "./actions";
 import { toast } from "~/components/ui/sonner";
 
 export function MoveToTeamButton({
@@ -19,7 +19,7 @@ export function MoveToTeamButton({
 
   const onClick = () => {
     startTransition(async () => {
-      const result = await moveToTeam({
+      const result = await moveToTeamAction({
         newTeamId: team.id,
         userId: user.id,
         workbookId: Number(workbookId),
@@ -50,7 +50,7 @@ export function CheckOutButton({
 
   const onClick = () => {
     startTransition(async () => {
-      const result = await removeFromTeamAndCheckOut({
+      const result = await removeFromTeamAndCheckOutAction({
         userId: user.id,
         workbookId: Number(workbookId),
       });
