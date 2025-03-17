@@ -102,6 +102,10 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
     }
 
     revalidatePath(`${validatedData.workbookId}/teams`);
+
+    return {
+      numTeams: teams.length,
+    };
   }, "Unable to create teams and matchups");
 
   return result.response;

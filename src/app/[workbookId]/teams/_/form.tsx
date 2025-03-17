@@ -35,8 +35,12 @@ export function GenerateTeamsForm({
 
   async function onSubmit(data: GenerateTeamsSchema) {
     startTransition(async () => {
-      await createTeamsAndMatchupsAction(data);
-      toast.success("Matchups generated!");
+      const result = await createTeamsAndMatchupsAction(data);
+      if (result.error) {
+        toast.error(result.error.message);
+      } else {
+        toast.success(`Built ${result.data.numTeams} Teams!`);
+      }
     });
   }
 
@@ -87,7 +91,7 @@ export function GenerateTeamsForm({
               )}
             />
 
-            <Button loading={isPending}>Generate Teams</Button>
+            <Button loading={isPending}>Build Teams</Button>
           </form>
         </div>
       </Form>
