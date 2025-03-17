@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "pnpm with-env next dev",
-    "build": "pnpm with-env next build",
-    "start": "pnpm with-env next start",
+    "dev": "TZ=UTC pnpm with-env next dev",
+    "build": "TZ=UTC pnpm with-env next build",
+    "start": "TZ=UTC pnpm with-env next start",
     "lint": "pnpm with-env next lint",
     "with-env": "dotenv -e .env --"
   },

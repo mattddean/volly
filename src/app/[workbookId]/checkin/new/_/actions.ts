@@ -2,7 +2,7 @@
 
 import { attendeeSetsTable, checkinsTable, usersTable } from "~/db/schema";
 import { eq } from "drizzle-orm";
-import { NewUserSchema, newUserSchema } from "./schemas";
+import { type NewUserSchema, newUserSchema } from "./schemas";
 import { db } from "~/db";
 import { Player } from "../../../../../models/player";
 import { format as formatDate } from "date-fns";
@@ -27,7 +27,7 @@ export async function createUser(data: NewUserSchema) {
       skillGroup: "E",
       zScore: player.zScore,
       sigma: player.sigma,
-      lastPlayed: formatDate(player.lastPlayed, "yyyy-MM-dd"),
+      lastPlayedDay: formatDate(player.lastPlayed, "yyyy-MM-dd"),
       gamesPlayed: player.gamesPlayed,
       wins: player.wins,
       pointsScored: player.pointsScored,

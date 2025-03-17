@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "~/db";
 import {
@@ -23,7 +23,10 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
     });
 
     const checkins = await db.query.checkinsTable.findMany({
-      where: eq(checkinsTable.attendeeSetId, attendeeSet?.id ?? 0),
+      where: and(
+        eq(checkinsTable.attendeeSetId, attendeeSet?.id ?? 0),
+        isNull(checkinsTable.checkedOutAt),
+      ),
     });
 
     const allPlayers = await db.query.usersTable.findMany();
@@ -80,7 +83,7 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
       .insert(teamsTable)
       .values(
         teams.map((_player, index) => ({
-          name: `Team ${index + 1}`,
+          name: `Team ${index + 1}`, // Team 1, Team 2, etc.
           workbookId: Number(validatedData.workbookId),
         })),
       )
@@ -93,6 +96,7 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
         players.map((player) => ({
           teamId: team.id,
           userId: player.id,
+          workbookId: Number(validatedData.workbookId),
         })),
       );
     }
@@ -101,4 +105,59 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
   }, "Unable to create teams and matchups");
 
   return result.response;
+}
+
+export async function moveToTeam({
+  workbookId,
+  userId,
+  newTeamId,
+}: {
+  workbookId: number;
+  userId: number;
+  newTeamId: number;
+}) {
+  await db
+    .update(teamsUsersTable)
+    .set({ teamId: newTeamId })
+    .where(
+      and(
+        eq(teamsUsersTable.userId, userId),
+        eq(teamsUsersTable.workbookId, workbookId),
+      ),
+    );
+}
+
+export async function removeFromTeamAndCheckOut({
+  workbookId,
+  userId,
+}: {
+  workbookId: number;
+  userId: number;
+}) {
+  console.debug("removing from team and checking out", userId, workbookId);
+
+  await db
+    .delete(teamsUsersTable)
+    .where(
+      and(
+        eq(teamsUsersTable.userId, userId),
+        eq(teamsUsersTable.workbookId, workbookId),
+      ),
+    );
+
+  console.debug("did remove");
+
+  await db
+    .update(checkinsTable)
+    .set({
+      checkedOutAt: new Date().toISOString(),
+    })
+    .where(
+      and(
+        eq(checkinsTable.userId, userId),
+        eq(checkinsTable.workbookId, workbookId),
+      ),
+    );
+
+  console.debug("did check out");
 }

@@ -1,11 +1,11 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { attendeeSetsTable, checkinsTable, usersTable } from "~/db/schema";
 import { db } from "~/db";
 import { withActionResult } from "~/lib/server-actions";
 import { type CheckinSchema, checkinSchema } from "./schemas";
-import { ReportableError } from "../../../../lib/errors/reportable-error";
+import { ReportableError } from "~/lib/errors/reportable-error";
 
 export async function checkin(data: CheckinSchema) {
   const result = await withActionResult(async () => {
@@ -31,6 +31,7 @@ export async function checkin(data: CheckinSchema) {
       where: and(
         eq(checkinsTable.attendeeSetId, attendeeSet.id),
         eq(checkinsTable.userId, user.id),
+        isNull(checkinsTable.checkedOutAt),
       ),
     });
 

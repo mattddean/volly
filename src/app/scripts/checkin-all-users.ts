@@ -10,6 +10,7 @@ async function main() {
     users.map((user) => ({
       attendeeSetId: 1,
       userId: user.id,
+      workbookId: 1,
     })),
   );
 }

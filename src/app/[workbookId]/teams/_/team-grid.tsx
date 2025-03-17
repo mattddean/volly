@@ -1,5 +1,5 @@
 import { teamsTable } from "~/db/schema";
-import { db } from "../../../../db";
+import { db } from "~/db";
 import { eq } from "drizzle-orm";
 import {
   Popover,
@@ -7,7 +7,7 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { EllipsisVerticalIcon } from "lucide-react";
-import { Button } from "~/components/ui/button";
+import { CheckOutButton, MoveToTeamButton } from "./team-grid-buttons";
 
 export async function TeamGrid({ workbookId }: { workbookId: string }) {
   const teams = await db.query.teamsTable.findMany({
@@ -23,21 +23,33 @@ export async function TeamGrid({ workbookId }: { workbookId: string }) {
             <div className="text-lg">{team.name}</div>
             <div className="divide-accent divide-y">
               {team.users.map((user) => {
+                const usr = user.user;
                 return (
                   <div className="py-1 flex justify-between" key={user.userId}>
-                    <div className="whitespace-nowrap">{user.user?.name}</div>
-                    <Popover>
-                      <PopoverTrigger
-                        type="button"
-                        className="cursor-pointer size-4"
-                      >
-                        <EllipsisVerticalIcon className="size-full" />
-                      </PopoverTrigger>
-                      <PopoverContent>
-                        <Button type="button">Move</Button>
-                        <Button type="button">Move</Button>
-                      </PopoverContent>
-                    </Popover>
+                    <div className="whitespace-nowrap">{usr?.name}</div>
+                    {usr && (
+                      <Popover>
+                        <PopoverTrigger
+                          type="button"
+                          className="cursor-pointer size-4"
+                        >
+                          <EllipsisVerticalIcon className="size-full" />
+                        </PopoverTrigger>
+                        <PopoverContent className="flex flex-col gap-y-2">
+                          {teams.map((t) => {
+                            return (
+                              <MoveToTeamButton
+                                key={t.id}
+                                team={t}
+                                user={usr}
+                                workbookId={workbookId}
+                              />
+                            );
+                          })}
+                          <CheckOutButton user={usr} workbookId={workbookId} />
+                        </PopoverContent>
+                      </Popover>
+                    )}
                   </div>
                 );
               })}
