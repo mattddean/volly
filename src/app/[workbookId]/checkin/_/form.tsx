@@ -23,6 +23,7 @@ import { checkin } from "./actions";
 import { SelectUser } from "~/db/schema";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { toast } from "~/components/ui/sonner";
 
 export function CheckinForm({ users }: { users: SelectUser[] }) {
   const form = useForm<CheckinSchema>({
@@ -33,7 +34,12 @@ export function CheckinForm({ users }: { users: SelectUser[] }) {
   });
 
   async function onSubmit(data: CheckinSchema) {
-    await checkin(data);
+    const response = await checkin(data);
+    if (response.error) {
+      toast.error(response.error.message);
+    } else {
+      toast.success("You're checked in!");
+    }
   }
 
   const pathname = usePathname();
@@ -75,7 +81,7 @@ export function CheckinForm({ users }: { users: SelectUser[] }) {
           />
 
           <div className="flex gap-x-2">
-            <Button>Submit</Button>
+            <Button>Check in</Button>
             <Button variant="secondary" asChild type="button">
               <Link href={`${pathname}/new`}>I&rsquo;m new</Link>
             </Button>

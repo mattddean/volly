@@ -15,6 +15,7 @@ import {
 import { createTeamsAndMatchups } from "./actions";
 import { useState } from "react";
 import { Player } from "~/models/player";
+import { toast } from "~/components/ui/sonner";
 
 export function GenerateTeamsForm() {
   const form = useForm<GenerateTeamsSchema>({
@@ -30,6 +31,7 @@ export function GenerateTeamsForm() {
   async function onSubmit(data: GenerateTeamsSchema) {
     const teams = await createTeamsAndMatchups(data);
     setTeams(teams);
+    toast.success("Matchups generated!");
   }
 
   return (

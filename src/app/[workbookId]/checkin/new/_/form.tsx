@@ -13,6 +13,7 @@ import {
 } from "~/components/ui/form";
 import { createUser } from "./actions";
 import { Input } from "~/components/ui/input";
+import { toast } from "~/components/ui/sonner";
 
 export function CheckinForm() {
   const form = useForm<NewUserSchema>({
@@ -24,6 +25,7 @@ export function CheckinForm() {
 
   async function onSubmit(data: NewUserSchema) {
     await createUser(data);
+    toast.success("You're checked in!");
   }
 
   return (

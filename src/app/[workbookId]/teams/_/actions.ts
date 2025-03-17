@@ -1,12 +1,7 @@
 "use server";
 
 import { eq, inArray } from "drizzle-orm";
-import {
-  attendeeSetsTable,
-  checkinsTable,
-  matchupsTable,
-  usersTable,
-} from "~/db/schema";
+import { attendeeSetsTable, checkinsTable, usersTable } from "~/db/schema";
 import { db } from "~/db";
 import { VolleyballMatchmaker } from "../../../../volleyball-matchmaker";
 import { generateTeamsSchema, GenerateTeamsSchema } from "./schemas";

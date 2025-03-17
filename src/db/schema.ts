@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 
 export const usersTable = sqliteTable("users", {
   id: integer("id").primaryKey(),
@@ -36,12 +36,17 @@ export const attendeeSetsTable = sqliteTable("attendee_sets", {
   workbookId: integer("workbook_id").references(() => workbooksTable.id),
 });
 
-export const checkinsTable = sqliteTable("checkins", {
-  attendeeSetId: integer("attendee_set_id").references(
-    () => attendeeSetsTable.id
-  ),
-  userId: integer("user_id").references(() => usersTable.id),
-});
+export const checkinsTable = sqliteTable(
+  "checkins",
+  {
+    id: integer("id").primaryKey(),
+    attendeeSetId: integer("attendee_set_id").references(
+      () => attendeeSetsTable.id
+    ),
+    userId: integer("user_id").references(() => usersTable.id),
+  },
+  (t) => [unique().on(t.attendeeSetId, t.userId)]
+);
 
 export const teamsUsersTable = sqliteTable("teams_users", {
   teamId: integer("team_id").references(() => teamsTable.id),
@@ -102,6 +107,24 @@ export const teamsUsersRelations = relations(teamsUsersTable, ({ one }) => ({
   }),
 }));
 
+export const attendeeSetsRelations = relations(
+  attendeeSetsTable,
+  ({ many }) => ({
+    checkins: many(checkinsTable),
+  })
+);
+
+export const checkinsRelations = relations(checkinsTable, ({ one }) => ({
+  attendeeSet: one(attendeeSetsTable, {
+    fields: [checkinsTable.attendeeSetId],
+    references: [attendeeSetsTable.id],
+  }),
+  user: one(usersTable, {
+    fields: [checkinsTable.userId],
+    references: [usersTable.id],
+  }),
+}));
+
 export type InsertUser = typeof usersTable.$inferInsert;
 export type SelectUser = typeof usersTable.$inferSelect;
 
@@ -113,3 +136,9 @@ export type SelectMatchup = typeof matchupsTable.$inferSelect;
 
 export type InsertGame = typeof gamesTable.$inferInsert;
 export type SelectGame = typeof gamesTable.$inferSelect;
+
+export type InsertAttendeeSet = typeof attendeeSetsTable.$inferInsert;
+export type SelectAttendeeSet = typeof attendeeSetsTable.$inferSelect;
+
+export type InsertCheckin = typeof checkinsTable.$inferInsert;
+export type SelectCheckin = typeof checkinsTable.$inferSelect;
