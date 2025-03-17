@@ -116,15 +116,21 @@ export async function moveToTeam({
   userId: number;
   newTeamId: number;
 }) {
-  await db
-    .update(teamsUsersTable)
-    .set({ teamId: newTeamId })
-    .where(
-      and(
-        eq(teamsUsersTable.userId, userId),
-        eq(teamsUsersTable.workbookId, workbookId),
-      ),
-    );
+  const result = await withActionResult(async () => {
+    await db
+      .update(teamsUsersTable)
+      .set({ teamId: newTeamId })
+      .where(
+        and(
+          eq(teamsUsersTable.userId, userId),
+          eq(teamsUsersTable.workbookId, workbookId),
+        ),
+      );
+
+    revalidatePath(`${workbookId}/teams`);
+  }, "Unable to move player to team");
+
+  return result.response;
 }
 
 export async function removeFromTeamAndCheckOut({
@@ -134,30 +140,30 @@ export async function removeFromTeamAndCheckOut({
   workbookId: number;
   userId: number;
 }) {
-  console.debug("removing from team and checking out", userId, workbookId);
+  const result = await withActionResult(async () => {
+    await db
+      .delete(teamsUsersTable)
+      .where(
+        and(
+          eq(teamsUsersTable.userId, userId),
+          eq(teamsUsersTable.workbookId, workbookId),
+        ),
+      );
 
-  await db
-    .delete(teamsUsersTable)
-    .where(
-      and(
-        eq(teamsUsersTable.userId, userId),
-        eq(teamsUsersTable.workbookId, workbookId),
-      ),
-    );
+    await db
+      .update(checkinsTable)
+      .set({
+        checkedOutAt: new Date().toISOString(),
+      })
+      .where(
+        and(
+          eq(checkinsTable.userId, userId),
+          eq(checkinsTable.workbookId, workbookId),
+        ),
+      );
 
-  console.debug("did remove");
+    revalidatePath(`${workbookId}/teams`);
+  }, "Unable to remove from team and check out");
 
-  await db
-    .update(checkinsTable)
-    .set({
-      checkedOutAt: new Date().toISOString(),
-    })
-    .where(
-      and(
-        eq(checkinsTable.userId, userId),
-        eq(checkinsTable.workbookId, workbookId),
-      ),
-    );
-
-  console.debug("did check out");
+  return result.response;
 }

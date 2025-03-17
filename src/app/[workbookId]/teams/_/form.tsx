@@ -87,10 +87,7 @@ export function GenerateTeamsForm({
               )}
             />
 
-            <Button>
-              Generate Teams
-              {isPending && <Loader2Icon className="size-4 animate-spin" />}
-            </Button>
+            <Button loading={isPending}>Generate Teams</Button>
           </form>
         </div>
       </Form>

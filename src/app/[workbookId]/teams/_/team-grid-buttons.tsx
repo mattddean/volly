@@ -4,7 +4,7 @@ import type { SelectTeam, SelectUser } from "~/db/schema";
 import { Button } from "~/components/ui/button";
 import { useTransition } from "react";
 import { moveToTeam, removeFromTeamAndCheckOut } from "./actions";
-import { Loader2Icon } from "lucide-react";
+import { toast } from "~/components/ui/sonner";
 
 export function MoveToTeamButton({
   team,
@@ -19,18 +19,22 @@ export function MoveToTeamButton({
 
   const onClick = () => {
     startTransition(async () => {
-      await moveToTeam({
+      const result = await moveToTeam({
         newTeamId: team.id,
         userId: user.id,
         workbookId: Number(workbookId),
       });
+      if (result.error) {
+        toast.error(result.error.message);
+      } else {
+        toast.success("Moved to team");
+      }
     });
   };
 
   return (
-    <Button type="button" onClick={onClick}>
+    <Button type="button" onClick={onClick} loading={isPending}>
       Move to team {team.name}
-      {isPending && <Loader2Icon className="size-4 ml-2" />}
     </Button>
   );
 }
@@ -46,17 +50,28 @@ export function CheckOutButton({
 
   const onClick = () => {
     startTransition(async () => {
-      await removeFromTeamAndCheckOut({
+      const result = await removeFromTeamAndCheckOut({
         userId: user.id,
         workbookId: Number(workbookId),
       });
+      if (result.error) {
+        toast.error(result.error.message);
+      } else {
+        toast.success(
+          `${user.name} has been removed from their team and checked out`,
+        );
+      }
     });
   };
 
   return (
-    <Button type="button" onClick={onClick}>
-      Check out
-      {isPending && <Loader2Icon className="size-4 ml-2" />}
+    <Button
+      type="button"
+      variant="destructive"
+      onClick={onClick}
+      loading={isPending}
+    >
+      Remove and Check Out
     </Button>
   );
 }
