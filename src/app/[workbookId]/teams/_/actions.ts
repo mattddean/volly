@@ -1,12 +1,19 @@
 "use server";
 
 import { eq, inArray } from "drizzle-orm";
-import { attendeeSetsTable, checkinsTable, usersTable } from "~/db/schema";
+import {
+  attendeeSetsTable,
+  checkinsTable,
+  teamsTable,
+  teamsUsersTable,
+  usersTable,
+} from "~/db/schema";
 import { db } from "~/db";
 import { VolleyballMatchmaker } from "../../../../volleyball-matchmaker";
 import { generateTeamsSchema, GenerateTeamsSchema } from "./schemas";
+import { revalidatePath } from "next/cache";
 
-export async function createTeamsAndMatchups(data: GenerateTeamsSchema) {
+export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
   const validatedData = generateTeamsSchema.parse(data);
 
   const workbookId = 1; // TODO: real workbook id
@@ -63,5 +70,29 @@ export async function createTeamsAndMatchups(data: GenerateTeamsSchema) {
     validatedData.scheduleRounds
   );
 
-  return teams.map((team) => team.map((player) => player.toObject()));
+  // delete all existing teams
+  await db.delete(teamsTable).where(eq(teamsTable.workbookId, workbookId));
+
+  for (const players of teams) {
+    const ts = await db
+      .insert(teamsTable)
+      .values(
+        teams.map(() => ({
+          name: "", // TODO: real name or get rid of this
+          workbookId,
+        }))
+      )
+      .returning();
+    const team = ts[0];
+    if (!team) throw new Error("DB Issue: team not returned from insert");
+
+    for (const player of players) {
+      await db.insert(teamsUsersTable).values({
+        teamId: team.id,
+        userId: player.id,
+      });
+    }
+  }
+
+  revalidatePath(`${workbookId}/teams`);
 }

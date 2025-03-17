@@ -49,14 +49,20 @@ export const checkinsTable = sqliteTable(
 );
 
 export const teamsUsersTable = sqliteTable("teams_users", {
-  teamId: integer("team_id").references(() => teamsTable.id),
+  teamId: integer("team_id").references(() => teamsTable.id, {
+    onDelete: "cascade",
+  }),
   userId: integer("user_id").references(() => usersTable.id),
 });
 
 export const matchupsTable = sqliteTable("matchups", {
   id: integer("id").primaryKey(),
-  team1Id: integer("team1_id").references(() => teamsTable.id),
-  team2Id: integer("team2_id").references(() => teamsTable.id),
+  team1Id: integer("team1_id").references(() => teamsTable.id, {
+    onDelete: "cascade",
+  }),
+  team2Id: integer("team2_id").references(() => teamsTable.id, {
+    onDelete: "cascade",
+  }),
 });
 
 export const gamesTable = sqliteTable("games", {

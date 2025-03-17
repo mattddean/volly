@@ -17,7 +17,8 @@ export async function createUser(data: NewUserSchema) {
     throw new Error("Attendee set not found");
   }
 
-  const player = new Player(validatedData.name, "E");
+  // 0 doesn't matter, db will generate one
+  const player = new Player(0, validatedData.name, "E");
 
   const users = await db
     .insert(usersTable)

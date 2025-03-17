@@ -362,7 +362,7 @@ async function manualPlayerAdjustment() {
         },
       ]);
 
-      matchmaker.players[playerName] = new Player(playerName, skillGroup);
+      matchmaker.players[playerName] = new Player(0, playerName, skillGroup);
       matchmaker.savePlayers();
       console.log(
         chalk.green(

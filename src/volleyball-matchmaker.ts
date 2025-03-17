@@ -33,6 +33,7 @@ export class VolleyballMatchmaker {
   ) {
     this.players = allPlayers.reduce((acc, player) => {
       acc[player.id] = new Player(
+        player.id,
         player.name,
         player.skillGroup,
         player.zScore,

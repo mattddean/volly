@@ -12,9 +12,7 @@ import {
   FormMessage,
   FormField,
 } from "~/components/ui/form";
-import { createTeamsAndMatchups } from "./actions";
-import { useState } from "react";
-import { Player } from "~/models/player";
+import { createTeamsAndMatchupsAction } from "./actions";
 import { toast } from "~/components/ui/sonner";
 
 export function GenerateTeamsForm() {
@@ -26,11 +24,8 @@ export function GenerateTeamsForm() {
     },
   });
 
-  const [teams, setTeams] = useState<Player[][]>([]);
-
   async function onSubmit(data: GenerateTeamsSchema) {
-    const teams = await createTeamsAndMatchups(data);
-    setTeams(teams);
+    await createTeamsAndMatchupsAction(data);
     toast.success("Matchups generated!");
   }
 
@@ -60,8 +55,6 @@ export function GenerateTeamsForm() {
               </FormItem>
             )}
           />
-
-          {JSON.stringify(teams)}
 
           <Button>Generate Teams</Button>
         </form>

@@ -6,6 +6,7 @@ type ChemistryMap = {
 };
 
 export class Player {
+  id: number;
   name: string;
   skillGroup: string;
   zScore: number;
@@ -19,12 +20,14 @@ export class Player {
   skillGroupRating: number;
 
   constructor(
+    id: number,
     name: string,
     skillGroup: string,
     zScore: number = 100.0,
     sigma: number = 100.0,
     lastPlayed: Date | null = null
   ) {
+    this.id = id;
     this.name = name;
     this.skillGroup = skillGroup; // A-F where A is best
     this.zScore = zScore; // TrueSkill rating (mu)
@@ -130,6 +133,7 @@ export class Player {
   // Create a player from data object
   static fromObject(obj: any): Player {
     const player = new Player(
+      0, // TODO: clean this up
       obj["Name"],
       obj["Skill_Group"],
       parseFloat(obj["Z_Score"]),

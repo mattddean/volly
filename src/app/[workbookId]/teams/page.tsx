@@ -17,6 +17,7 @@ export default async function TeamsPage({
 
   const teams = await db.query.teamsTable.findMany({
     where: eq(teamsTable.workbookId, Number(workbookId)),
+    with: { users: { with: { user: true } } },
   });
 
   const attendeeSet = await db.query.attendeeSetsTable.findFirst({
@@ -34,5 +35,19 @@ export default async function TeamsPage({
     ),
   });
 
-  return <GenerateTeamsForm />;
+  return (
+    <div>
+      <div>
+        {teams.map((team) => {
+          return (
+            <div key={team.id}>
+              <div>{team.name}</div>
+              <div>{team.users.map((user) => user.user?.name)}</div>
+            </div>
+          );
+        })}
+      </div>
+      <GenerateTeamsForm />
+    </div>
+  );
 }
