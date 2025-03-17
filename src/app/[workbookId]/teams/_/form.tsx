@@ -11,6 +11,7 @@ import {
   FormItem,
   FormMessage,
   FormField,
+  FormControl,
 } from "~/components/ui/form";
 import { createTeamsAndMatchupsAction } from "./actions";
 import { toast } from "~/components/ui/sonner";
@@ -50,7 +51,16 @@ export function GenerateTeamsForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Team Size</FormLabel>
-                  <Input type="number" {...field} />
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => {
+                        // convert from string to number
+                        field.onChange(Number(e.target.value));
+                      }}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -62,7 +72,16 @@ export function GenerateTeamsForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Schedule Rounds</FormLabel>
-                  <Input type="number" {...field} />
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => {
+                        // convert from string to number
+                        field.onChange(Number(e.target.value));
+                      }}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

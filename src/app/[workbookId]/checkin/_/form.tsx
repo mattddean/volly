@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { CheckinSchema, checkinSchema } from "./schemas";
+import { type CheckinSchema, checkinSchema } from "./schemas";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -20,7 +20,7 @@ import {
   FormField,
 } from "~/components/ui/form";
 import { checkin } from "./actions";
-import { SelectUser } from "~/db/schema";
+import type { SelectUser } from "~/db/schema";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { toast } from "~/components/ui/sonner";
