@@ -138,7 +138,7 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
       }
     }
 
-    revalidatePath(`${validatedData.tournamentId}/teams`);
+    revalidatePath(`${validatedData.tournamentId}/matchups`);
 
     return {
       numTeams: teams.length,
@@ -169,7 +169,7 @@ export async function moveToTeamAction({
         ),
       );
 
-    revalidatePath(`${tournamentId}/teams`);
+    revalidatePath(`${tournamentId}/matchups`);
   }, "Unable to move player to team");
 
   return result.response;
@@ -204,7 +204,7 @@ export async function removeFromTeamAndCheckOutAction({
         ),
       );
 
-    revalidatePath(`${tournamentId}/teams`);
+    revalidatePath(`${tournamentId}/matchups`);
   }, "Unable to remove from team and check out");
 
   return result.response;

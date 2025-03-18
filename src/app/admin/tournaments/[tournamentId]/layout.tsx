@@ -41,7 +41,7 @@ export default async function TournamentLayout({
               Checkins
             </Link>
             <Link
-              href={`/admin/tournaments/${tournamentId}/teams`}
+              href={`/admin/tournaments/${tournamentId}/matchups`}
               className="px-4 py-2 bg-sky-gradient text-white rounded-md transition-colors hover:from-[var(--sky-700)] hover:to-[var(--sky-700)]"
             >
               Matchups
