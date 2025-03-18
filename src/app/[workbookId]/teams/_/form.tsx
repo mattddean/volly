@@ -50,9 +50,9 @@ export function GenerateTeamsForm({
         <div className="justify-center items-center flex h-full">
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-6 bg-gradient-to-r from-sky-50 to-green-50 p-6 rounded-lg border border-gray-200 shadow-md"
+            className="space-y-6 bg-sky-green-light p-6 rounded-lg border border-gray-200 shadow-md"
           >
-            <h3 className="text-xl font-bold bg-gradient-to-r from-sky-600 to-green-600 bg-clip-text text-transparent">
+            <h3 className="text-xl font-bold text-sky-green-gradient">
               Generate Teams & Matchups
             </h3>
 
@@ -70,7 +70,7 @@ export function GenerateTeamsForm({
                         // convert from string to number
                         field.onChange(Number(e.target.value));
                       }}
-                      className="border-sky-200 focus:border-sky-500 focus:ring-sky-500"
+                      className="border-sky-200 focus:border-[var(--sky-500)] focus:ring-[var(--sky-500)]"
                     />
                   </FormControl>
                   <FormMessage />
@@ -94,7 +94,7 @@ export function GenerateTeamsForm({
                         // convert from string to number
                         field.onChange(Number(e.target.value));
                       }}
-                      className="border-green-200 focus:border-green-500 focus:ring-green-500"
+                      className="border-green-200 focus:border-[var(--green-500)] focus:ring-[var(--green-500)]"
                     />
                   </FormControl>
                   <FormMessage />
@@ -104,7 +104,7 @@ export function GenerateTeamsForm({
 
             <Button
               loading={isPending}
-              className="bg-gradient-to-r from-sky-600 to-green-600 hover:from-sky-700 hover:to-green-700"
+              className="bg-sky-green-gradient hover:from-[var(--sky-700)] hover:to-[var(--green-700)] text-white"
             >
               Build Matchups
             </Button>

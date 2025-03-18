@@ -54,7 +54,7 @@ export async function TeamGrid({ workbookId }: { workbookId: string }) {
               {roundMatchups.map((matchup) => (
                 <div
                   key={matchup.id}
-                  className="border border-gray-200 rounded-lg p-6 shadow bg-gradient-to-r from-sky-50 to-green-50"
+                  className="border border-gray-200 rounded-lg p-6 shadow bg-sky-green-light"
                 >
                   <div className="flex flex-col sm:flex-row items-center gap-4">
                     {/* Team 1 */}
@@ -69,7 +69,7 @@ export async function TeamGrid({ workbookId }: { workbookId: string }) {
 
                     {/* VS Divider */}
                     <div className="flex-shrink-0 py-2">
-                      <div className="bg-gradient-to-r from-sky-500 to-green-500 text-white rounded-full px-3 py-1 font-bold">
+                      <div className="bg-sky-green-gradient text-white rounded-full px-3 py-1 font-bold">
                         VS
                       </div>
                     </div>
@@ -128,12 +128,12 @@ function TeamCard({
     sky: {
       header: "bg-sky-100 text-sky-800",
       border: "border-sky-200",
-      card: "bg-white shadow-sky-100",
+      card: "bg-white shadow-sky",
     },
     green: {
       header: "bg-green-100 text-green-800",
       border: "border-green-200",
-      card: "bg-white shadow-green-100",
+      card: "bg-white shadow-green",
     },
   };
 
@@ -141,7 +141,7 @@ function TeamCard({
 
   return (
     <div
-      className={`rounded-lg p-4 shadow-sm h-full ${colors.card} ${colors.border} border`}
+      className={`rounded-lg p-4 shadow-sm h-full border ${colors.border} ${colors.card}`}
     >
       <div
         className={`text-lg font-medium mb-2 rounded px-2 py-1 ${colors.header}`}
