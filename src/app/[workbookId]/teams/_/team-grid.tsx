@@ -15,14 +15,14 @@ import {
 import { EllipsisVerticalIcon } from "lucide-react";
 import { CheckOutButton, MoveToTeamButton } from "./team-grid-buttons";
 
-export async function TeamGrid({ workbookId }: { workbookId: string }) {
+export async function TeamGrid({ tournamentId }: { tournamentId: string }) {
   const teams = await db.query.teamsTable.findMany({
-    where: eq(teamsTable.workbookId, Number(workbookId)),
+    where: eq(teamsTable.tournamentId, Number(tournamentId)),
     with: { users: { with: { user: true } } },
   });
 
   const matchups = await db.query.matchupsTable.findMany({
-    where: eq(matchupsTable.workbookId, Number(workbookId)),
+    where: eq(matchupsTable.tournamentId, Number(tournamentId)),
     with: {
       team1: { with: { users: { with: { user: true } } } },
       team2: { with: { users: { with: { user: true } } } },
@@ -62,7 +62,7 @@ export async function TeamGrid({ workbookId }: { workbookId: string }) {
                       <TeamCard
                         team={matchup.team1}
                         otherTeams={teams}
-                        workbookId={workbookId}
+                        tournamentId={tournamentId}
                         teamColor="sky"
                       />
                     </div>
@@ -79,7 +79,7 @@ export async function TeamGrid({ workbookId }: { workbookId: string }) {
                       <TeamCard
                         team={matchup.team2}
                         otherTeams={teams}
-                        workbookId={workbookId}
+                        tournamentId={tournamentId}
                         teamColor="green"
                       />
                     </div>
@@ -97,7 +97,7 @@ export async function TeamGrid({ workbookId }: { workbookId: string }) {
               key={team.id}
               team={team}
               otherTeams={teams}
-              workbookId={workbookId}
+              tournamentId={tournamentId}
               teamColor={index % 2 === 0 ? "sky" : "green"}
             />
           ))}
@@ -110,7 +110,7 @@ export async function TeamGrid({ workbookId }: { workbookId: string }) {
 function TeamCard({
   team,
   otherTeams,
-  workbookId,
+  tournamentId,
   teamColor = "sky",
 }: {
   team:
@@ -119,7 +119,7 @@ function TeamCard({
       })
     | null;
   otherTeams: SelectTeam[];
-  workbookId: string;
+  tournamentId: string;
   teamColor?: "sky" | "green";
 }) {
   if (!team) return null;
@@ -172,11 +172,11 @@ function TeamCard({
                           key={t.id}
                           team={t}
                           user={usr}
-                          workbookId={workbookId}
+                          tournamentId={tournamentId}
                         />
                       );
                     })}
-                    <CheckOutButton user={usr} workbookId={workbookId} />
+                    <CheckOutButton user={usr} tournamentId={tournamentId} />
                   </PopoverContent>
                 </Popover>
               )}

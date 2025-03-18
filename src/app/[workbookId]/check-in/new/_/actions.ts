@@ -43,10 +43,10 @@ export async function createUser(data: NewUserSchema) {
     await db.insert(checkinsTable).values({
       attendeeSetId: attendeeSet.id,
       userId: user.id,
-      workbookId: Number(validatedData.workbookId),
+      tournamentId: Number(validatedData.tournamentId),
     });
 
-    redirect(`/${validatedData.workbookId}/checkin`, RedirectType.replace);
+    redirect(`/${validatedData.tournamentId}/checkin`, RedirectType.replace);
   }, "Unable to check you in. Please ask for help!");
 
   return result.response;

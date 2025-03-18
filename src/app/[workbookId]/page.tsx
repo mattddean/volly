@@ -2,9 +2,9 @@ import { eq } from "drizzle-orm";
 import { attendeeSetsTable } from "../../db/schema";
 import { db } from "../../db";
 
-export default async function WorkbookHomePage() {
+export default async function TournamentHomePage() {
   const attendeeSet = await db.query.attendeeSetsTable.findFirst({
-    where: eq(attendeeSetsTable.workbookId, 1),
+    where: eq(attendeeSetsTable.tournamentId, 1),
     with: {
       checkins: { with: { user: true } },
     },

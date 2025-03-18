@@ -28,16 +28,16 @@ import { useTransition } from "react";
 
 export function CheckInForm({
   users,
-  workbookId,
+  tournamentId,
 }: {
   users: SelectUser[];
-  workbookId: string;
+  tournamentId: string;
 }) {
   const form = useForm<CheckinSchema>({
     resolver: zodResolver(checkinSchema),
     defaultValues: {
       userId: "0",
-      workbookId,
+      tournamentId,
     },
   });
 

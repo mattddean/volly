@@ -9,11 +9,11 @@ import { toast } from "~/components/ui/sonner";
 export function MoveToTeamButton({
   team,
   user,
-  workbookId,
+  tournamentId,
 }: {
   team: SelectTeam;
   user: SelectUser;
-  workbookId: string;
+  tournamentId: string;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -22,7 +22,7 @@ export function MoveToTeamButton({
       const result = await moveToTeamAction({
         newTeamId: team.id,
         userId: user.id,
-        workbookId: Number(workbookId),
+        tournamentId: Number(tournamentId),
       });
       if (result.error) {
         toast.error(result.error.message);
@@ -41,10 +41,10 @@ export function MoveToTeamButton({
 
 export function CheckOutButton({
   user,
-  workbookId,
+  tournamentId,
 }: {
   user: SelectUser;
-  workbookId: string;
+  tournamentId: string;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -52,7 +52,7 @@ export function CheckOutButton({
     startTransition(async () => {
       const result = await removeFromTeamAndCheckOutAction({
         userId: user.id,
-        workbookId: Number(workbookId),
+        tournamentId: Number(tournamentId),
       });
       if (result.error) {
         toast.error(result.error.message);

@@ -6,14 +6,14 @@ import { Suspense } from "react";
 export default async function TeamsPage({
   params,
 }: {
-  params: Promise<{ workbookId: string }>;
+  params: Promise<{ tournamentId: string }>;
 }) {
-  const workbookId = (await params).workbookId;
+  const tournamentId = (await params).tournamentId;
 
   return (
     <div className="flex flex-col gap-y-12 px-16">
       <div className="h-12" />
-      <GenerateTeamsForm workbookId={workbookId}>
+      <GenerateTeamsForm tournamentId={tournamentId}>
         <Suspense
           fallback={
             <div className="size-full flex items-center justify-center">
@@ -21,7 +21,7 @@ export default async function TeamsPage({
             </div>
           }
         >
-          <TeamGrid workbookId={workbookId} />
+          <TeamGrid tournamentId={tournamentId} />
         </Suspense>
       </GenerateTeamsForm>
     </div>

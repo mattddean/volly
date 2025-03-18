@@ -22,23 +22,23 @@ export const userChemistriesTable = sqliteTable("user_chemistries", {
   chemistry: text("chemistry").notNull(),
 });
 
-export const workbooksTable = sqliteTable("workbooks", {
+export const tournamentsTable = sqliteTable("tournaments", {
   id: integer("id").primaryKey(),
 });
 
 export const teamsTable = sqliteTable("teams", {
   id: integer("id").primaryKey(),
   name: text("name").notNull(),
-  workbookId: integer("workbook_id")
+  tournamentId: integer("tournament_id")
     .notNull()
-    .references(() => workbooksTable.id),
+    .references(() => tournamentsTable.id),
 });
 
 export const attendeeSetsTable = sqliteTable("attendee_sets", {
   id: integer("id").primaryKey(),
-  workbookId: integer("workbook_id")
+  tournamentId: integer("tournament_id")
     .notNull()
-    .references(() => workbooksTable.id),
+    .references(() => tournamentsTable.id),
 });
 
 export const checkinsTable = sqliteTable(
@@ -49,9 +49,9 @@ export const checkinsTable = sqliteTable(
       () => attendeeSetsTable.id,
     ),
     userId: integer("user_id").references(() => usersTable.id),
-    workbookId: integer("workbook_id")
+    tournamentId: integer("tournament_id")
       .notNull()
-      .references(() => workbooksTable.id),
+      .references(() => tournamentsTable.id),
     checkedOutAt: text("checked_out_at"),
   },
   (t) => [unique().on(t.attendeeSetId, t.userId)],
@@ -65,11 +65,14 @@ export const teamsUsersTable = sqliteTable(
       onDelete: "cascade",
     }),
     userId: integer("user_id").references(() => usersTable.id),
-    workbookId: integer("workbook_id")
+    tournamentId: integer("tournament_id")
       .notNull()
-      .references(() => workbooksTable.id),
+      .references(() => tournamentsTable.id),
   },
-  (t) => [unique().on(t.teamId, t.userId), unique().on(t.userId, t.workbookId)],
+  (t) => [
+    unique().on(t.teamId, t.userId),
+    unique().on(t.userId, t.tournamentId),
+  ],
 );
 
 export const matchupsTable = sqliteTable("matchups", {
@@ -80,9 +83,9 @@ export const matchupsTable = sqliteTable("matchups", {
   team2Id: integer("team2_id").references(() => teamsTable.id, {
     onDelete: "cascade",
   }),
-  workbookId: integer("workbook_id")
+  tournamentId: integer("tournament_id")
     .notNull()
-    .references(() => workbooksTable.id),
+    .references(() => tournamentsTable.id),
   roundNumber: integer("round_number"),
 });
 
@@ -94,9 +97,9 @@ export const gamesTable = sqliteTable("games", {
   team1Score: integer("team1_score").notNull(),
   team2Score: integer("team2_score").notNull(),
   day: text("day").notNull(),
-  workbookId: integer("workbook_id")
+  tournamentId: integer("tournament_id")
     .notNull()
-    .references(() => workbooksTable.id),
+    .references(() => tournamentsTable.id),
 });
 
 export const gamesRelations = relations(gamesTable, ({ one }) => ({

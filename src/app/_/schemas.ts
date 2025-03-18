@@ -1,5 +1,5 @@
 import { z } from "zod";
 
-export const newWorkbookSchema = z.object({});
+export const newTournamentSchema = z.object({});
 
-export type NewWorkbookSchema = z.infer<typeof newWorkbookSchema>;
+export type NewTournamentSchema = z.infer<typeof newTournamentSchema>;

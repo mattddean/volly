@@ -20,7 +20,10 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
     const validatedData = generateTeamsSchema.parse(data);
 
     const attendeeSet = await db.query.attendeeSetsTable.findFirst({
-      where: eq(attendeeSetsTable.workbookId, Number(validatedData.workbookId)),
+      where: eq(
+        attendeeSetsTable.tournamentId,
+        Number(validatedData.tournamentId),
+      ),
     });
 
     const checkins = await db.query.checkinsTable.findMany({
@@ -83,12 +86,14 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
     // delete all existing teams
     await db
       .delete(teamsTable)
-      .where(eq(teamsTable.workbookId, Number(validatedData.workbookId)));
+      .where(eq(teamsTable.tournamentId, Number(validatedData.tournamentId)));
 
-    // delete all existing matchups for this workbook
+    // delete all existing matchups for this tournament
     await db
       .delete(matchupsTable)
-      .where(eq(matchupsTable.workbookId, Number(validatedData.workbookId)));
+      .where(
+        eq(matchupsTable.tournamentId, Number(validatedData.tournamentId)),
+      );
 
     // create enough blank teams
     const ts = await db
@@ -96,7 +101,7 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
       .values(
         teams.map((_player, index) => ({
           name: `Team ${index + 1}`, // Team 1, Team 2, etc.
-          workbookId: Number(validatedData.workbookId),
+          tournamentId: Number(validatedData.tournamentId),
         })),
       )
       .returning();
@@ -108,7 +113,7 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
         players.map((player) => ({
           teamId: team.id,
           userId: player.id,
-          workbookId: Number(validatedData.workbookId),
+          tournamentId: Number(validatedData.tournamentId),
         })),
       );
     }
@@ -121,14 +126,14 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
           await db.insert(matchupsTable).values({
             team1Id: ts[team1Idx].id,
             team2Id: ts[team2Idx].id,
-            workbookId: Number(validatedData.workbookId),
+            tournamentId: Number(validatedData.tournamentId),
             roundNumber: roundIdx + 1,
           });
         }
       }
     }
 
-    revalidatePath(`${validatedData.workbookId}/teams`);
+    revalidatePath(`${validatedData.tournamentId}/teams`);
 
     return {
       numTeams: teams.length,
@@ -140,11 +145,11 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
 }
 
 export async function moveToTeamAction({
-  workbookId,
+  tournamentId,
   userId,
   newTeamId,
 }: {
-  workbookId: number;
+  tournamentId: number;
   userId: number;
   newTeamId: number;
 }) {
@@ -155,21 +160,21 @@ export async function moveToTeamAction({
       .where(
         and(
           eq(teamsUsersTable.userId, userId),
-          eq(teamsUsersTable.workbookId, workbookId),
+          eq(teamsUsersTable.tournamentId, tournamentId),
         ),
       );
 
-    revalidatePath(`${workbookId}/teams`);
+    revalidatePath(`${tournamentId}/teams`);
   }, "Unable to move player to team");
 
   return result.response;
 }
 
 export async function removeFromTeamAndCheckOutAction({
-  workbookId,
+  tournamentId,
   userId,
 }: {
-  workbookId: number;
+  tournamentId: number;
   userId: number;
 }) {
   const result = await withActionResult(async () => {
@@ -178,7 +183,7 @@ export async function removeFromTeamAndCheckOutAction({
       .where(
         and(
           eq(teamsUsersTable.userId, userId),
-          eq(teamsUsersTable.workbookId, workbookId),
+          eq(teamsUsersTable.tournamentId, tournamentId),
         ),
       );
 
@@ -190,11 +195,11 @@ export async function removeFromTeamAndCheckOutAction({
       .where(
         and(
           eq(checkinsTable.userId, userId),
-          eq(checkinsTable.workbookId, workbookId),
+          eq(checkinsTable.tournamentId, tournamentId),
         ),
       );
 
-    revalidatePath(`${workbookId}/teams`);
+    revalidatePath(`${tournamentId}/teams`);
   }, "Unable to remove from team and check out");
 
   return result.response;

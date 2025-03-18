@@ -3,9 +3,9 @@ import { CheckinForm } from "./_/form";
 export default async function Checkin({
   params,
 }: {
-  params: Promise<{ workbookId: string }>;
+  params: Promise<{ tournamentId: string }>;
 }) {
-  const { workbookId } = await params;
+  const { tournamentId } = await params;
 
-  return <CheckinForm workbookId={workbookId} />;
+  return <CheckinForm tournamentId={tournamentId} />;
 }

@@ -18,12 +18,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTransition } from "react";
 
-export function CheckinForm({ workbookId }: { workbookId: string }) {
+export function CheckinForm({ tournamentId }: { tournamentId: string }) {
   const form = useForm<NewUserSchema>({
     resolver: zodResolver(newUserSchema),
     defaultValues: {
       name: "",
-      workbookId,
+      tournamentId,
     },
   });
 

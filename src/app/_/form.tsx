@@ -1,29 +1,29 @@
 "use client";
 
 import { Button } from "~/components/ui/button";
-import { type NewWorkbookSchema, newWorkbookSchema } from "./schemas";
+import { type NewTournamentSchema, newTournamentSchema } from "./schemas";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "~/components/ui/form";
-import { createWorkbookAction } from "./actions";
+import { createTournamentAction } from "./actions";
 import { toast } from "~/components/ui/sonner";
 import { useTransition, type ReactNode } from "react";
 import { Loader2Icon } from "lucide-react";
 
-export function WorkbookForm({ children }: { children?: ReactNode }) {
-  const form = useForm<NewWorkbookSchema>({
-    resolver: zodResolver(newWorkbookSchema),
+export function TournamentForm({ children }: { children?: ReactNode }) {
+  const form = useForm<NewTournamentSchema>({
+    resolver: zodResolver(newTournamentSchema),
     defaultValues: {},
   });
 
   const [isPending, startTransition] = useTransition();
-  function onSubmit(data: NewWorkbookSchema) {
+  function onSubmit(data: NewTournamentSchema) {
     startTransition(async () => {
-      const result = await createWorkbookAction(data);
+      const result = await createTournamentAction(data);
       if (result.error) {
         toast.error(result.error.message);
       } else {
-        toast.success("Workbook Created!");
+        toast.success("Tournament Created!");
       }
     });
   }
@@ -40,7 +40,7 @@ export function WorkbookForm({ children }: { children?: ReactNode }) {
               loading={isPending}
               className="bg-sky-green-gradient hover:from-[var(--sky-700)] hover:to-[var(--green-700)] text-white"
             >
-              New Workbook
+              New Tournament
             </Button>
           </form>
         </div>

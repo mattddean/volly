@@ -1,16 +1,22 @@
 "use server";
 
-import { workbooksTable } from "~/db/schema";
+import { tournamentsTable } from "~/db/schema";
 import { db } from "~/db";
 import { withActionResult } from "~/lib/server-actions";
-import { newWorkbookSchema, type NewWorkbookSchema } from "./schemas";
+import { newTournamentSchema, type NewTournamentSchema } from "./schemas";
+import { redirect } from "next/navigation";
 
-export async function createWorkbookAction(data: NewWorkbookSchema) {
+export async function createTournamentAction(data: NewTournamentSchema) {
   const result = await withActionResult(async () => {
-    const _validatedData = newWorkbookSchema.parse(data);
+    const _validatedData = newTournamentSchema.parse(data);
 
-    await db.insert(workbooksTable).values({});
-  }, "Failed to check in");
+    const result = await db.insert(tournamentsTable).values({});
+    const tournamentId = result.lastInsertRowid;
+    if (!tournamentId)
+      throw new Error("DB Error: Did not get inserted tournament id");
+
+    redirect(`/${tournamentId}/check-in`);
+  }, "Failed to create Tournament");
 
   return result.response;
 }

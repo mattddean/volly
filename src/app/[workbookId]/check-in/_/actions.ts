@@ -52,7 +52,7 @@ export async function checkInAction(data: CheckinSchema) {
     await db.insert(checkinsTable).values({
       attendeeSetId: attendeeSet.id,
       userId: user.id,
-      workbookId: Number(validatedData.workbookId),
+      tournamentId: Number(validatedData.tournamentId),
     });
   }, "Failed to check in");
 
