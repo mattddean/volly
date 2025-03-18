@@ -25,7 +25,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { toast } from "~/components/ui/sonner";
 
-export function CheckinForm({
+export function CheckInForm({
   users,
   workbookId,
 }: {

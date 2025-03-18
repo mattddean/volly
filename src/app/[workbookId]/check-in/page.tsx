@@ -1,7 +1,7 @@
 import { db } from "~/db";
-import { CheckinForm } from "./_/form";
+import { CheckInForm } from "./_/form";
 
-export default async function Checkin({
+export default async function CheckIn({
   params,
 }: {
   params: Promise<{ workbookId: string }>;
@@ -9,5 +9,5 @@ export default async function Checkin({
   const { workbookId } = await params;
   const users = await db.query.usersTable.findMany();
 
-  return <CheckinForm users={users} workbookId={workbookId} />;
+  return <CheckInForm users={users} workbookId={workbookId} />;
 }
