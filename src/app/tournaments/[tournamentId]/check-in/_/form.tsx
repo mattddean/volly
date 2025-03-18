@@ -33,7 +33,6 @@ export function CheckInForm({
   users: SelectUser[];
   tournamentId: string;
 }) {
-  console.debug({ users, tournamentId });
   const form = useForm<CheckinSchema>({
     resolver: zodResolver(checkinSchema),
     defaultValues: {

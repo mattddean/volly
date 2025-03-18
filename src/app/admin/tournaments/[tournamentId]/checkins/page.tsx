@@ -6,6 +6,9 @@ import { CheckInAllPlayersButton, DeleteCheckInButton } from "./_/buttons";
 import { TournamentTemplate } from "../_/tournament-template";
 import { Suspense } from "react";
 import { FullPageLoading } from "~/components/full-page-loading";
+import { Button } from "~/components/ui/button";
+import Link from "next/link";
+import { ExternalLinkIcon } from "lucide-react";
 
 interface Props {
   params: Promise<{ tournamentId: string }>;
@@ -42,6 +45,11 @@ async function Suspended({
       <TournamentTemplate tournamentId={tournamentId} />
 
       <div className="flex flex-col items-center justify-center h-full gap-y-4">
+        <Button asChild variant="link">
+          <Link href={`/tournaments/${tournamentId}/check-in`} target="_blank">
+            Check in new players <ExternalLinkIcon className="size-4" />
+          </Link>
+        </Button>
         <h1 className="text-2xl font-bold">Checked in Players</h1>
 
         <ul className="flex flex-col gap-y-2">
