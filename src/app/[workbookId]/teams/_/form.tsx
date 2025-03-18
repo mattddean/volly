@@ -91,7 +91,7 @@ export function GenerateTeamsForm({
               )}
             />
 
-            <Button loading={isPending}>Build Teams</Button>
+            <Button loading={isPending}>Build Matchups</Button>
           </form>
         </div>
       </Form>
