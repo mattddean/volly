@@ -47,12 +47,14 @@ export async function TeamGrid({ workbookId }: { workbookId: string }) {
       {rounds.length > 0 ? (
         rounds.map(([roundNumber, roundMatchups]) => (
           <div key={roundNumber} className="space-y-4">
-            <h2 className="text-xl font-semibold">Round {roundNumber}</h2>
+            <h2 className="text-xl font-semibold bg-sky-100 text-sky-800 inline-block px-4 py-2 rounded-lg">
+              Round {roundNumber}
+            </h2>
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {roundMatchups.map((matchup) => (
                 <div
                   key={matchup.id}
-                  className="border border-accent rounded-lg p-6 shadow bg-card"
+                  className="border border-gray-200 rounded-lg p-6 shadow bg-gradient-to-r from-sky-50 to-green-50"
                 >
                   <div className="flex flex-col sm:flex-row items-center gap-4">
                     {/* Team 1 */}
@@ -61,12 +63,13 @@ export async function TeamGrid({ workbookId }: { workbookId: string }) {
                         team={matchup.team1}
                         otherTeams={teams}
                         workbookId={workbookId}
+                        teamColor="sky"
                       />
                     </div>
 
                     {/* VS Divider */}
                     <div className="flex-shrink-0 py-2">
-                      <div className="bg-primary text-primary-foreground rounded-full px-3 py-1 font-bold">
+                      <div className="bg-gradient-to-r from-sky-500 to-green-500 text-white rounded-full px-3 py-1 font-bold">
                         VS
                       </div>
                     </div>
@@ -77,6 +80,7 @@ export async function TeamGrid({ workbookId }: { workbookId: string }) {
                         team={matchup.team2}
                         otherTeams={teams}
                         workbookId={workbookId}
+                        teamColor="green"
                       />
                     </div>
                   </div>
@@ -88,12 +92,13 @@ export async function TeamGrid({ workbookId }: { workbookId: string }) {
       ) : (
         // Fallback to original grid if no matchups
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {teams.map((team) => (
+          {teams.map((team, index) => (
             <TeamCard
               key={team.id}
               team={team}
               otherTeams={teams}
               workbookId={workbookId}
+              teamColor={index % 2 === 0 ? "sky" : "green"}
             />
           ))}
         </div>
@@ -106,6 +111,7 @@ function TeamCard({
   team,
   otherTeams,
   workbookId,
+  teamColor = "sky",
 }: {
   team:
     | (SelectTeam & {
@@ -114,12 +120,34 @@ function TeamCard({
     | null;
   otherTeams: SelectTeam[];
   workbookId: string;
+  teamColor?: "sky" | "green";
 }) {
   if (!team) return null;
 
+  const colorClasses = {
+    sky: {
+      header: "bg-sky-100 text-sky-800",
+      border: "border-sky-200",
+      card: "bg-white shadow-sky-100",
+    },
+    green: {
+      header: "bg-green-100 text-green-800",
+      border: "border-green-200",
+      card: "bg-white shadow-green-100",
+    },
+  };
+
+  const colors = colorClasses[teamColor];
+
   return (
-    <div className="rounded-lg p-4 shadow-sm h-full">
-      <div className="text-lg font-medium mb-2">{team.name}</div>
+    <div
+      className={`rounded-lg p-4 shadow-sm h-full ${colors.card} ${colors.border} border`}
+    >
+      <div
+        className={`text-lg font-medium mb-2 rounded px-2 py-1 ${colors.header}`}
+      >
+        {team.name}
+      </div>
       <div className="divide-input divide-y">
         {team.users.map((user) => {
           const usr = user.user;
