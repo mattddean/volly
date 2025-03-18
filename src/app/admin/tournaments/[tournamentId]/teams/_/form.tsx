@@ -51,7 +51,7 @@ export function GenerateTeamsForm({
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6 bg-sky-green-light p-6 rounded-lg border border-gray-200 shadow-md"
           >
-            <h3 className="text-xl font-bold text-sky-green-gradient">
+            <h3 className="text-xl font-bold text-sky-700">
               Generate Teams & Matchups
             </h3>
 

@@ -13,7 +13,9 @@ export default async function Home() {
         <div className="flex flex-col gap-y-2">
           {tournaments.map((tournament) => (
             <Button key={tournament.id} asChild>
-              <Link href={`/${tournament.id}/check-in`}>{tournament.id}</Link>
+              <Link href={`/admin/tournaments/${tournament.id}`}>
+                {tournament.id}
+              </Link>
             </Button>
           ))}
         </div>

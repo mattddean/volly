@@ -63,9 +63,7 @@ export function CheckInForm({
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-6 w-full max-w-sm bg-sky-green-light p-6 rounded-lg border border-gray-200 shadow-md"
         >
-          <h3 className="text-xl font-bold text-sky-green-gradient">
-            Check In
-          </h3>
+          <h3 className="text-xl font-bold text-sky-700">Check In</h3>
 
           <FormField
             control={form.control}

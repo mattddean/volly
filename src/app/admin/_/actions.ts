@@ -16,7 +16,7 @@ export async function createTournamentAction(data: NewTournamentSchema) {
       throw new Error("DB Error: Did not get inserted tournament id");
     }
 
-    redirect(`/${tournamentId}/check-in`);
+    redirect(`/admin/tournaments/${tournamentId}`);
   }, "Failed to create Tournament");
 
   return result.response;
