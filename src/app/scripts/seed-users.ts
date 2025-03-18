@@ -6,7 +6,7 @@ import { loadPlayersFromCSV } from "~/utils/file-utils";
 import { format as formatDate } from "date-fns";
 
 async function main() {
-  const players = loadPlayersFromCSV("./players.csv");
+  const players = loadPlayersFromCSV("./python/players.csv");
 
   const users = Object.values(players).map((player) => ({
     ...player,
