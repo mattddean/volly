@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
   experimental: {
     dynamicIO: true,
     ppr: true,
+    // disable router cache
+    staleTimes: {
+      dynamic: 0,
+      static: 0,
+    },
   },
 };
 
