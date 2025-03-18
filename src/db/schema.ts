@@ -29,6 +29,8 @@ export const userChemistriesTable = sqliteTable("user_chemistries", {
 
 export const tournamentsTable = sqliteTable("tournaments", {
   id: text("id").primaryKey().$defaultFn(ulid),
+  name: text("name").notNull(),
+  day: text("day"),
 });
 
 export const teamsTable = sqliteTable("teams", {

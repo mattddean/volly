@@ -12,7 +12,6 @@ export default async function TeamsPage({
 
   return (
     <div className="flex flex-col gap-y-12 px-16">
-      <div className="h-12" />
       <GenerateTeamsForm tournamentId={tournamentId}>
         <Suspense
           fallback={

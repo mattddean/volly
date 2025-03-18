@@ -56,7 +56,7 @@ export async function TeamGrid({ tournamentId }: { tournamentId: string }) {
                   key={matchup.id}
                   className="border border-gray-200 rounded-lg p-6 shadow bg-sky-green-light"
                 >
-                  <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="flex flex-col sm:flex-row items-start gap-4">
                     {/* Team 1 */}
                     <div className="flex-1 w-full">
                       <TeamCard

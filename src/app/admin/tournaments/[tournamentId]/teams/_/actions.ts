@@ -9,10 +9,12 @@ import {
   teamsUsersTable,
   usersTable,
   matchupsTable,
+  tournamentsTable,
 } from "~/db/schema";
 import { withActionResult } from "~/lib/server-actions";
 import { VolleyballMatchmaker } from "~/volleyball-matchmaker";
 import { type GenerateTeamsSchema, generateTeamsSchema } from "./schemas";
+import { ReportableError } from "~/lib/errors/reportable-error";
 
 export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
   const result = await withActionResult(async () => {
@@ -33,6 +35,19 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
         checkins.map((checkin) => checkin.userId),
       ),
     });
+
+    const tournament = await db.query.tournamentsTable.findFirst({
+      where: eq(tournamentsTable.id, validatedData.tournamentId),
+    });
+
+    if (attendingPlayers.length === 0) {
+      throw new ReportableError(
+        `No players are checked in for Tournament ${tournament?.name}`,
+        {
+          userMessage: `No players are checked in for Tournament ${tournament?.name}`,
+        },
+      );
+    }
 
     const games = await db.query.gamesTable.findMany({
       with: {

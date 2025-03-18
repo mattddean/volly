@@ -13,8 +13,8 @@ export default async function Home() {
         <div className="flex flex-col gap-y-2">
           {tournaments.map((tournament) => (
             <Button key={tournament.id} asChild>
-              <Link href={`/admin/tournaments/${tournament.id}`}>
-                {tournament.id}
+              <Link href={`/admin/tournaments/${tournament.id}/checkins`}>
+                {tournament.name}
               </Link>
             </Button>
           ))}
