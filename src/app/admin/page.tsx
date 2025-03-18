@@ -2,8 +2,17 @@ import { Button } from "~/components/ui/button";
 import { db } from "~/db";
 import { TournamentForm } from "./_/form";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export default async function Home() {
+  return (
+    <Suspense>
+      <Suspended />
+    </Suspense>
+  );
+}
+
+async function Suspended() {
   const tournaments = await db.query.tournamentsTable.findMany();
 
   return (

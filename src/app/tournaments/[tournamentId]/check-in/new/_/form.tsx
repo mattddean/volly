@@ -15,10 +15,12 @@ import { createUser } from "./actions";
 import { Input } from "~/components/ui/input";
 import { toast } from "~/components/ui/sonner";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useTransition } from "react";
 
-export function CheckinForm({ tournamentId }: { tournamentId: string }) {
+export function CheckinForm() {
+  const { tournamentId } = useParams<{ tournamentId: string }>();
+
   const form = useForm<NewUserSchema>({
     resolver: zodResolver(newUserSchema),
     defaultValues: {

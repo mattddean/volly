@@ -4,15 +4,11 @@ import { notFound } from "next/navigation";
 import { db } from "~/db";
 import { tournamentsTable } from "~/db/schema";
 
-export default async function TournamentLayout({
-  children,
-  params,
+export async function TournamentNav({
+  tournamentId,
 }: {
-  children: React.ReactNode;
-  params: Promise<{ tournamentId: string }>;
+  tournamentId: string;
 }) {
-  const { tournamentId } = await params;
-
   const tournament = await db.query.tournamentsTable.findFirst({
     where: eq(tournamentsTable.id, tournamentId),
   });
@@ -50,8 +46,6 @@ export default async function TournamentLayout({
         </div>
         <div className="h-26" />
       </div>
-
-      {children}
     </div>
   );
 }

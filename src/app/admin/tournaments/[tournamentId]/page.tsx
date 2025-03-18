@@ -1,3 +1,3 @@
-export default function TournamentPage() {
+export default async function TournamentPage() {
   return <></>;
 }
