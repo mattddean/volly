@@ -3,10 +3,11 @@ import { db } from "~/db";
 import { TournamentForm } from "./_/form";
 import Link from "next/link";
 import { Suspense } from "react";
+import { FullPageLoading } from "~/components/full-page-loading";
 
 export default async function Home() {
   return (
-    <Suspense>
+    <Suspense fallback={<FullPageLoading />}>
       <Suspended />
     </Suspense>
   );

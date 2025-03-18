@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { db } from "~/db";
 import { tournamentsTable } from "~/db/schema";
 
-export async function TournamentNav({
+export async function TournamentTemplate({
   tournamentId,
 }: {
   tournamentId: string;

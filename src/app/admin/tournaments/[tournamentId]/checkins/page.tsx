@@ -3,8 +3,9 @@ import { checkinsTable, tournamentsTable } from "~/db/schema";
 import { db } from "~/db";
 import { notFound } from "next/navigation";
 import { CheckInAllPlayersButton, DeleteCheckInButton } from "./_/buttons";
-import { TournamentNav } from "../_/tournament-template";
+import { TournamentTemplate } from "../_/tournament-template";
 import { Suspense } from "react";
+import { FullPageLoading } from "~/components/full-page-loading";
 
 interface Props {
   params: Promise<{ tournamentId: string }>;
@@ -12,7 +13,7 @@ interface Props {
 
 export default async function TournamentCheckinsPage(props: Props) {
   return (
-    <Suspense>
+    <Suspense fallback={<FullPageLoading />}>
       <Suspended {...props} />
     </Suspense>
   );
@@ -38,7 +39,7 @@ async function Suspended({
 
   return (
     <>
-      <TournamentNav tournamentId={tournamentId} />
+      <TournamentTemplate tournamentId={tournamentId} />
 
       <div className="flex flex-col items-center justify-center h-full gap-y-4">
         <h1 className="text-2xl font-bold">Checked in Players</h1>
