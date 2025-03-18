@@ -16,6 +16,7 @@ import { Input } from "~/components/ui/input";
 import { toast } from "~/components/ui/sonner";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTransition } from "react";
 
 export function CheckinForm({ workbookId }: { workbookId: string }) {
   const form = useForm<NewUserSchema>({
@@ -26,13 +27,16 @@ export function CheckinForm({ workbookId }: { workbookId: string }) {
     },
   });
 
-  async function onSubmit(data: NewUserSchema) {
-    const result = await createUser(data);
-    if (result.error) {
-      toast.error(result.error.message);
-    } else {
-      toast.success("You're checked in!");
-    }
+  const [isPending, startTransition] = useTransition();
+  function onSubmit(data: NewUserSchema) {
+    startTransition(async () => {
+      const result = await createUser(data);
+      if (result.error) {
+        toast.error(result.error.message);
+      } else {
+        toast.success("You're checked in!");
+      }
+    });
   }
 
   const pathname = usePathname();
@@ -71,6 +75,7 @@ export function CheckinForm({ workbookId }: { workbookId: string }) {
               asChild
               type="button"
               className="border-sky-200 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
+              loading={isPending}
             >
               <Link href={checkinPath}>Back</Link>
             </Button>

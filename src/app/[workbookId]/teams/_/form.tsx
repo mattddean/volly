@@ -32,8 +32,7 @@ export function GenerateTeamsForm({
   });
 
   const [isPending, startTransition] = useTransition();
-
-  async function onSubmit(data: GenerateTeamsSchema) {
+  function onSubmit(data: GenerateTeamsSchema) {
     startTransition(async () => {
       const result = await createTeamsAndMatchupsAction(data);
       if (result.error) {

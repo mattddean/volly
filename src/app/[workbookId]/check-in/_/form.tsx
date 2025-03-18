@@ -24,6 +24,7 @@ import type { SelectUser } from "~/db/schema";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { toast } from "~/components/ui/sonner";
+import { useTransition } from "react";
 
 export function CheckInForm({
   users,
@@ -40,13 +41,16 @@ export function CheckInForm({
     },
   });
 
-  async function onSubmit(data: CheckinSchema) {
-    const response = await checkInAction(data);
-    if (response.error) {
-      toast.error(response.error.message);
-    } else {
-      toast.success("You're checked in!");
-    }
+  const [isPending, startTransition] = useTransition();
+  function onSubmit(data: CheckinSchema) {
+    startTransition(async () => {
+      const response = await checkInAction(data);
+      if (response.error) {
+        toast.error(response.error.message);
+      } else {
+        toast.success("You're checked in!");
+      }
+    });
   }
 
   const pathname = usePathname();
@@ -99,6 +103,7 @@ export function CheckInForm({
               asChild
               type="button"
               className="border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
+              loading={isPending}
             >
               <Link href={`${pathname}/new`}>I&rsquo;m new!</Link>
             </Button>
