@@ -96,7 +96,10 @@ export function CheckInForm({
           />
 
           <div className="flex gap-x-2">
-            <Button className="bg-sky-gradient text-white hover:bg-sky-600">
+            <Button
+              className="bg-sky-gradient text-white hover:bg-sky-600"
+              loading={isPending}
+            >
               Check in
             </Button>
             <Button
@@ -104,7 +107,6 @@ export function CheckInForm({
               asChild
               type="button"
               className="border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
-              loading={isPending}
             >
               <Link href={`${pathname}/new`}>I&rsquo;m new!</Link>
             </Button>
