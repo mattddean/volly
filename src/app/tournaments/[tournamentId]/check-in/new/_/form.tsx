@@ -36,6 +36,7 @@ export function CheckinForm() {
       if (result.error) {
         toast.error(result.error.message);
       } else {
+        // TODO: this toast does not show with dynamicIO because we redirect in the server action
         toast.success("You're checked in!");
       }
     });
@@ -69,15 +70,17 @@ export function CheckinForm() {
           />
 
           <div className="flex gap-x-2">
-            <Button className="bg-green-gradient text-white hover:bg-green-600">
+            <Button
+              className="bg-green-gradient text-white hover:bg-green-600"
+              loading={isPending}
+            >
               Check in
             </Button>
             <Button
-              variant="outline"
-              asChild
               type="button"
+              variant="outline"
               className="border-sky-200 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
-              loading={isPending}
+              asChild
             >
               <Link href={checkinPath}>Back</Link>
             </Button>

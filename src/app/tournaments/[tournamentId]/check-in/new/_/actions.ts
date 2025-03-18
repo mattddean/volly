@@ -39,7 +39,10 @@ export async function createUser(data: NewUserSchema) {
       tournamentId: validatedData.tournamentId,
     });
 
-    redirect(`/${validatedData.tournamentId}/checkin`, RedirectType.replace);
+    redirect(
+      `/tournaments/${validatedData.tournamentId}/check-in`,
+      RedirectType.replace,
+    );
   }, "Unable to check you in. Please ask for help!");
 
   return result.response;
