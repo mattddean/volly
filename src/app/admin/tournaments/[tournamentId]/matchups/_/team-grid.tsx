@@ -68,7 +68,7 @@ export async function TeamGrid({ tournamentId }: { tournamentId: string }) {
                     </div>
 
                     {/* VS Divider */}
-                    <div className="flex-shrink-0 py-2">
+                    <div className="self-center flex-shrink-0 py-2">
                       <div className="bg-sky-green-gradient text-white rounded-full px-3 py-1 font-bold">
                         VS
                       </div>
@@ -129,11 +129,13 @@ function TeamCard({
       header: "bg-sky-100 text-sky-800",
       border: "border-sky-200",
       card: "bg-white shadow-sky",
+      stats: "bg-sky-50 text-sky-700",
     },
     green: {
       header: "bg-green-100 text-green-800",
       border: "border-green-200",
       card: "bg-white shadow-green",
+      stats: "bg-green-50 text-green-700",
     },
   };
 
@@ -143,10 +145,35 @@ function TeamCard({
     <div
       className={`rounded-lg p-4 shadow-sm h-full border ${colors.border} ${colors.card}`}
     >
-      <div
-        className={`text-lg font-medium mb-2 rounded px-2 py-1 ${colors.header}`}
-      >
-        {team.name}
+      <div className="flex flex-col gap-1 mb-3">
+        <div
+          className={`text-lg font-medium rounded px-2 py-1 ${colors.header}`}
+        >
+          {team.name}
+        </div>
+
+        {/* Team Stats */}
+        {(team.normalizedAvgZScore !== null || team.chemistry !== null) && (
+          <div
+            className={`text-sm rounded px-2 py-1 flex justify-between ${colors.stats}`}
+          >
+            {team.normalizedAvgZScore !== null && (
+              <div
+                className="flex items-center gap-1"
+                title="Team Normalized Z-Score"
+              >
+                <span>⚡</span>
+                <span>{team.normalizedAvgZScore.toFixed(1)}</span>
+              </div>
+            )}
+            {team.chemistry !== null && (
+              <div className="flex items-center gap-1" title="Team Chemistry">
+                <span>🤝</span>
+                <span>{team.chemistry.toFixed(1)}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="divide-input divide-y">
         {team.users.map((user) => {

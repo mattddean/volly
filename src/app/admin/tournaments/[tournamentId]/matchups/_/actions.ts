@@ -86,7 +86,7 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
 
     // Generate match schedule for these teams
     const schedule = matchmaker.createMatchSchedule(
-      teams,
+      teams.map((tm) => tm.players),
       validatedData.scheduleRounds,
     );
 
@@ -100,27 +100,34 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
       .delete(matchupsTable)
       .where(eq(matchupsTable.tournamentId, validatedData.tournamentId));
 
-    // create enough blank teams
-    const ts = await db
-      .insert(teamsTable)
-      .values(
-        teams.map((_player, index) => ({
+    const ts = [];
+    for (const [index, tm] of teams.entries()) {
+      // create the team with its stats
+      const dbResults = await db
+        .insert(teamsTable)
+        .values({
           name: `Team ${index + 1}`, // Team 1, Team 2, etc.
           tournamentId: validatedData.tournamentId,
-        })),
-      )
-      .returning();
+          avgZScore: tm.avgZScore,
+          normalizedAvgZScore: tm.normalizedAvgZScore,
+          chemistry: tm.chemistry,
+        })
+        .returning();
+      const dbTeam = dbResults[0];
+      if (!dbTeam) {
+        throw new Error("DB Error: No team id returned when creating teams");
+      }
 
-    // fill each team with players
-    for (const [index, players] of teams.entries()) {
-      const team = ts[index];
+      // fill the team with its players
       await db.insert(teamsUsersTable).values(
-        players.map((player) => ({
-          teamId: team.id,
+        tm.players.map((player) => ({
+          teamId: dbTeam.id,
           userId: player.id,
           tournamentId: validatedData.tournamentId,
         })),
       );
+
+      ts.push(dbTeam);
     }
 
     // Create matchups in the database

@@ -221,7 +221,7 @@ export class VolleyballMatchmaker {
     numTeams: number | null = null,
     iterations = 200,
     scheduleRounds: number,
-  ): Player[][] {
+  ) {
     const availablePlayers = [...this.attendingPlayers];
     const totalPlayers = availablePlayers.length;
 
@@ -417,7 +417,17 @@ export class VolleyballMatchmaker {
         playerIndex += currentTeamSize;
       }
 
-      return teams;
+      const tms = [];
+      for (const team of teams) {
+        tms.push({
+          players: team,
+          avgZScore: 0,
+          normalizedAvgZScore: 0,
+          chemistry: 0,
+        });
+      }
+
+      return tms;
     }
 
     // For displaying team info, we'll show both actual and normalized ratings
@@ -427,6 +437,7 @@ export class VolleyballMatchmaker {
     const allPlayerRatings = availablePlayers.map((p) => p.weightedRating());
     const globalAvgRating = average(allPlayerRatings);
 
+    const tms = [];
     for (let i = 0; i < bestTeams.length; i++) {
       const team = bestTeams[i];
 
@@ -459,6 +470,13 @@ export class VolleyballMatchmaker {
             1,
           )}`,
       );
+
+      tms.push({
+        players: team,
+        avgZScore: teamSkill,
+        normalizedAvgZScore: normRating,
+        chemistry: teamChem,
+      });
     }
 
     // Show overall team balance stats
@@ -559,7 +577,7 @@ export class VolleyballMatchmaker {
     //   }
     // }
 
-    return bestTeams;
+    return tms;
   }
 
   // // Shuffle array in place (Fisher-Yates algorithm)

@@ -39,6 +39,9 @@ export const teamsTable = sqliteTable("teams", {
   tournamentId: text("tournament_id")
     .notNull()
     .references(() => tournamentsTable.id),
+  avgZScore: integer("avg_z_score"),
+  normalizedAvgZScore: integer("normalized_avg_z_score"),
+  chemistry: integer("chemistry"),
 });
 
 export const checkinsTable = sqliteTable(
