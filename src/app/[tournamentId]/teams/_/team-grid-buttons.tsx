@@ -22,7 +22,7 @@ export function MoveToTeamButton({
       const result = await moveToTeamAction({
         newTeamId: team.id,
         userId: user.id,
-        tournamentId: Number(tournamentId),
+        tournamentId,
       });
       if (result.error) {
         toast.error(result.error.message);
@@ -52,7 +52,7 @@ export function CheckOutButton({
     startTransition(async () => {
       const result = await removeFromTeamAndCheckOutAction({
         userId: user.id,
-        tournamentId: Number(tournamentId),
+        tournamentId,
       });
       if (result.error) {
         toast.error(result.error.message);

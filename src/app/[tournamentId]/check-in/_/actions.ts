@@ -1,7 +1,7 @@
 "use server";
 
 import { and, eq } from "drizzle-orm";
-import { attendeeSetsTable, checkinsTable, usersTable } from "~/db/schema";
+import { checkinsTable, usersTable } from "~/db/schema";
 import { db } from "~/db";
 import { withActionResult } from "~/lib/server-actions";
 import { type CheckinSchema, checkinSchema } from "./schemas";
@@ -12,23 +12,15 @@ export async function checkInAction(data: CheckinSchema) {
     const validatedData = checkinSchema.parse(data);
 
     const user = await db.query.usersTable.findFirst({
-      where: eq(usersTable.id, Number(validatedData.userId)),
+      where: eq(usersTable.id, validatedData.userId),
     });
     if (!user) {
       throw new Error("User not found");
     }
 
-    const attendeeSet = await db.query.attendeeSetsTable.findFirst({
-      where: eq(attendeeSetsTable.id, 1), // TODO: real attendee set id
-    });
-
-    if (!attendeeSet) {
-      throw new Error("Attendee set not found");
-    }
-
     const checkin = await db.query.checkinsTable.findFirst({
       where: and(
-        eq(checkinsTable.attendeeSetId, attendeeSet.id),
+        eq(checkinsTable.tournamentId, validatedData.tournamentId),
         eq(checkinsTable.userId, user.id),
       ),
     });
@@ -50,9 +42,8 @@ export async function checkInAction(data: CheckinSchema) {
     }
 
     await db.insert(checkinsTable).values({
-      attendeeSetId: attendeeSet.id,
       userId: user.id,
-      tournamentId: Number(validatedData.tournamentId),
+      tournamentId: validatedData.tournamentId,
     });
   }, "Failed to check in");
 

@@ -1,8 +1,9 @@
 import { relations } from "drizzle-orm";
 import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
+import { ulid } from "~/lib/ulid";
 
 export const usersTable = sqliteTable("users", {
-  id: integer("id").primaryKey(),
+  id: text("id").primaryKey().$defaultFn(ulid),
   name: text("name").notNull(),
   skillGroup: text("skill_group").notNull(),
   zScore: integer("z_score").notNull(),
@@ -16,27 +17,24 @@ export const usersTable = sqliteTable("users", {
 });
 
 export const userChemistriesTable = sqliteTable("user_chemistries", {
-  id: integer("id").primaryKey(),
-  userId: integer("user_id").references(() => usersTable.id),
-  withUserId: integer("with_user_id").references(() => usersTable.id),
+  id: text("id").primaryKey().$defaultFn(ulid),
+  userId: text("user_id")
+    .notNull()
+    .references(() => usersTable.id),
+  withUserId: text("with_user_id")
+    .notNull()
+    .references(() => usersTable.id),
   chemistry: text("chemistry").notNull(),
 });
 
 export const tournamentsTable = sqliteTable("tournaments", {
-  id: integer("id").primaryKey(),
+  id: text("id").primaryKey().$defaultFn(ulid),
 });
 
 export const teamsTable = sqliteTable("teams", {
-  id: integer("id").primaryKey(),
+  id: text("id").primaryKey().$defaultFn(ulid),
   name: text("name").notNull(),
-  tournamentId: integer("tournament_id")
-    .notNull()
-    .references(() => tournamentsTable.id),
-});
-
-export const attendeeSetsTable = sqliteTable("attendee_sets", {
-  id: integer("id").primaryKey(),
-  tournamentId: integer("tournament_id")
+  tournamentId: text("tournament_id")
     .notNull()
     .references(() => tournamentsTable.id),
 });
@@ -44,28 +42,31 @@ export const attendeeSetsTable = sqliteTable("attendee_sets", {
 export const checkinsTable = sqliteTable(
   "checkins",
   {
-    id: integer("id").primaryKey(),
-    attendeeSetId: integer("attendee_set_id").references(
-      () => attendeeSetsTable.id,
-    ),
-    userId: integer("user_id").references(() => usersTable.id),
-    tournamentId: integer("tournament_id")
+    id: text("id").primaryKey().$defaultFn(ulid),
+    userId: text("user_id")
+      .notNull()
+      .references(() => usersTable.id),
+    tournamentId: text("tournament_id")
       .notNull()
       .references(() => tournamentsTable.id),
     checkedOutAt: text("checked_out_at"),
   },
-  (t) => [unique().on(t.attendeeSetId, t.userId)],
+  (t) => [unique().on(t.tournamentId, t.userId)],
 );
 
 export const teamsUsersTable = sqliteTable(
   "teams_users",
   {
-    id: integer("id").primaryKey(),
-    teamId: integer("team_id").references(() => teamsTable.id, {
-      onDelete: "cascade",
-    }),
-    userId: integer("user_id").references(() => usersTable.id),
-    tournamentId: integer("tournament_id")
+    id: text("id").primaryKey().$defaultFn(ulid),
+    teamId: text("team_id")
+      .notNull()
+      .references(() => teamsTable.id, {
+        onDelete: "cascade",
+      }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => usersTable.id),
+    tournamentId: text("tournament_id")
       .notNull()
       .references(() => tournamentsTable.id),
   },
@@ -76,56 +77,75 @@ export const teamsUsersTable = sqliteTable(
 );
 
 export const matchupsTable = sqliteTable("matchups", {
-  id: integer("id").primaryKey(),
-  team1Id: integer("team1_id").references(() => teamsTable.id, {
-    onDelete: "cascade",
-  }),
-  team2Id: integer("team2_id").references(() => teamsTable.id, {
-    onDelete: "cascade",
-  }),
-  tournamentId: integer("tournament_id")
+  id: text("id").primaryKey().$defaultFn(ulid),
+  team1Id: text("team1_id")
+    .notNull()
+    .references(() => teamsTable.id, {
+      onDelete: "cascade",
+    }),
+  team2Id: text("team2_id")
+    .notNull()
+    .references(() => teamsTable.id, {
+      onDelete: "cascade",
+    }),
+  tournamentId: text("tournament_id")
     .notNull()
     .references(() => tournamentsTable.id),
-  roundNumber: integer("round_number"),
+  roundNumber: integer("round_number").notNull(),
 });
 
 export const gamesTable = sqliteTable("games", {
-  id: integer("id").primaryKey(),
-  matchupsId: integer("matchups_id").references(() => matchupsTable.id),
-  team1Id: integer("team1_id").references(() => teamsTable.id),
-  team2Id: integer("team2_id").references(() => teamsTable.id),
+  id: text("id").primaryKey().$defaultFn(ulid),
+  matchupId: text("matchup_id")
+    .notNull()
+    .references(() => matchupsTable.id),
+  team1Id: text("team1_id")
+    .notNull()
+    .references(() => teamsTable.id),
+  team2Id: text("team2_id")
+    .notNull()
+    .references(() => teamsTable.id),
   team1Score: integer("team1_score").notNull(),
   team2Score: integer("team2_score").notNull(),
   day: text("day").notNull(),
-  tournamentId: integer("tournament_id")
+  tournamentId: text("tournament_id")
     .notNull()
     .references(() => tournamentsTable.id),
 });
 
 export const gamesRelations = relations(gamesTable, ({ one }) => ({
   matchup: one(matchupsTable, {
-    fields: [gamesTable.matchupsId],
+    fields: [gamesTable.matchupId],
     references: [matchupsTable.id],
+    relationName: "matchupsGames",
   }),
 }));
 
 export const matchupsRelations = relations(matchupsTable, ({ one }) => ({
   games: one(gamesTable, {
     fields: [matchupsTable.id],
-    references: [gamesTable.matchupsId],
+    references: [gamesTable.matchupId],
+    relationName: "matchupsGames",
   }),
   team1: one(teamsTable, {
     fields: [matchupsTable.team1Id],
     references: [teamsTable.id],
+    relationName: "teamsMatchups1",
   }),
   team2: one(teamsTable, {
     fields: [matchupsTable.team2Id],
     references: [teamsTable.id],
+    relationName: "teamsMatchups2",
   }),
 }));
 
 export const teamsRelations = relations(teamsTable, ({ many }) => ({
-  matchups: many(matchupsTable),
+  matchups1: many(matchupsTable, {
+    relationName: "teamsMatchups1",
+  }),
+  matchups2: many(matchupsTable, {
+    relationName: "teamsMatchups2",
+  }),
   users: many(teamsUsersTable),
 }));
 
@@ -140,22 +160,19 @@ export const teamsUsersRelations = relations(teamsUsersTable, ({ one }) => ({
   }),
 }));
 
-export const attendeeSetsRelations = relations(
-  attendeeSetsTable,
-  ({ many }) => ({
-    checkins: many(checkinsTable),
-  }),
-);
-
 export const checkinsRelations = relations(checkinsTable, ({ one }) => ({
-  attendeeSet: one(attendeeSetsTable, {
-    fields: [checkinsTable.attendeeSetId],
-    references: [attendeeSetsTable.id],
-  }),
   user: one(usersTable, {
     fields: [checkinsTable.userId],
     references: [usersTable.id],
   }),
+  tournament: one(tournamentsTable, {
+    fields: [checkinsTable.tournamentId],
+    references: [tournamentsTable.id],
+  }),
+}));
+
+export const tournamentsRelations = relations(tournamentsTable, ({ many }) => ({
+  checkins: many(checkinsTable),
 }));
 
 export type InsertUser = typeof usersTable.$inferInsert;
@@ -172,9 +189,6 @@ export type SelectMatchup = typeof matchupsTable.$inferSelect;
 
 export type InsertGame = typeof gamesTable.$inferInsert;
 export type SelectGame = typeof gamesTable.$inferSelect;
-
-export type InsertAttendeeSet = typeof attendeeSetsTable.$inferInsert;
-export type SelectAttendeeSet = typeof attendeeSetsTable.$inferSelect;
 
 export type InsertCheckin = typeof checkinsTable.$inferInsert;
 export type SelectCheckin = typeof checkinsTable.$inferSelect;

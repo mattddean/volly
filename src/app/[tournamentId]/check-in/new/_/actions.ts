@@ -1,7 +1,6 @@
 "use server";
 
-import { attendeeSetsTable, checkinsTable, usersTable } from "~/db/schema";
-import { eq } from "drizzle-orm";
+import { checkinsTable, usersTable } from "~/db/schema";
 import { type NewUserSchema, newUserSchema } from "./schemas";
 import { db } from "~/db";
 import { Player } from "~/models/player";
@@ -13,15 +12,10 @@ export async function createUser(data: NewUserSchema) {
   const result = await withActionResult(async () => {
     const validatedData = newUserSchema.parse(data);
 
-    const attendeeSet = await db.query.attendeeSetsTable.findFirst({
-      where: eq(attendeeSetsTable.id, 1), // TODO: real attendee set id
+    const player = new Player({
+      id: "",
+      name: validatedData.name,
     });
-    if (!attendeeSet) {
-      throw new Error("Attendee set not found");
-    }
-
-    // 0 doesn't matter, db will generate an id
-    const player = new Player({ id: 0, name: validatedData.name });
 
     const users = await db
       .insert(usersTable)
@@ -41,9 +35,8 @@ export async function createUser(data: NewUserSchema) {
     if (!user) throw new Error("DB error: inserted user not returned");
 
     await db.insert(checkinsTable).values({
-      attendeeSetId: attendeeSet.id,
       userId: user.id,
-      tournamentId: Number(validatedData.tournamentId),
+      tournamentId: validatedData.tournamentId,
     });
 
     redirect(`/${validatedData.tournamentId}/checkin`, RedirectType.replace);

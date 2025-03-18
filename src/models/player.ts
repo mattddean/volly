@@ -6,7 +6,7 @@ type ChemistryMap = {
 };
 
 export class Player {
-  id: number;
+  id: string;
   name: string;
   skillGroup: string;
   zScore: number;
@@ -28,7 +28,7 @@ export class Player {
     lastPlayed,
   }: {
     /** Database ID */
-    id: number;
+    id: string;
     name: string;
     /** A-F where A is best */
     skillGroup?: string;
@@ -145,7 +145,7 @@ export class Player {
   // Create a player from data object
   static fromObject(obj: any): Player {
     const player = new Player({
-      id: 0, // TODO: clean this up
+      id: "0", // TODO: clean this up
       name: obj["Name"],
       skillGroup: obj["Skill_Group"],
       zScore: Number.parseFloat(obj["Z_Score"]),

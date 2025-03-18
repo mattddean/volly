@@ -33,14 +33,14 @@ export class VolleyballMatchmaker {
   ) {
     this.players = allPlayers.reduce(
       (acc, player) => {
-        acc[player.id] = new Player(
-          player.id,
-          player.name,
-          player.skillGroup,
-          player.zScore,
-          player.sigma,
-          new Date(player.lastPlayed), // TODO: better date parsing
-        );
+        acc[player.id] = new Player({
+          id: player.id,
+          name: player.name,
+          skillGroup: player.skillGroup,
+          zScore: player.zScore,
+          sigma: player.sigma,
+          lastPlayed: new Date(player.lastPlayedDay),
+        });
         return acc;
       },
       {} as { [id: string]: Player },
@@ -63,7 +63,7 @@ export class VolleyballMatchmaker {
       team2: game.team2.map((player) => player.name), // TODO: use player ids
       score1: game.team1Score,
       score2: game.team2Score,
-      date: game.date,
+      date: game.day,
     }));
 
     // Load existing player data and game history

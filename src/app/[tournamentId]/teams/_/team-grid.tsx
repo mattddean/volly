@@ -17,12 +17,12 @@ import { CheckOutButton, MoveToTeamButton } from "./team-grid-buttons";
 
 export async function TeamGrid({ tournamentId }: { tournamentId: string }) {
   const teams = await db.query.teamsTable.findMany({
-    where: eq(teamsTable.tournamentId, Number(tournamentId)),
+    where: eq(teamsTable.tournamentId, tournamentId),
     with: { users: { with: { user: true } } },
   });
 
   const matchups = await db.query.matchupsTable.findMany({
-    where: eq(matchupsTable.tournamentId, Number(tournamentId)),
+    where: eq(matchupsTable.tournamentId, tournamentId),
     with: {
       team1: { with: { users: { with: { user: true } } } },
       team2: { with: { users: { with: { user: true } } } },

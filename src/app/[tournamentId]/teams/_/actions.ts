@@ -4,7 +4,6 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "~/db";
 import {
-  attendeeSetsTable,
   checkinsTable,
   teamsTable,
   teamsUsersTable,
@@ -19,16 +18,9 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
   const result = await withActionResult(async () => {
     const validatedData = generateTeamsSchema.parse(data);
 
-    const attendeeSet = await db.query.attendeeSetsTable.findFirst({
-      where: eq(
-        attendeeSetsTable.tournamentId,
-        Number(validatedData.tournamentId),
-      ),
-    });
-
     const checkins = await db.query.checkinsTable.findMany({
       where: and(
-        eq(checkinsTable.attendeeSetId, attendeeSet?.id ?? 0),
+        eq(checkinsTable.tournamentId, validatedData.tournamentId),
         isNull(checkinsTable.checkedOutAt),
       ),
     });
@@ -86,14 +78,12 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
     // delete all existing teams
     await db
       .delete(teamsTable)
-      .where(eq(teamsTable.tournamentId, Number(validatedData.tournamentId)));
+      .where(eq(teamsTable.tournamentId, validatedData.tournamentId));
 
     // delete all existing matchups for this tournament
     await db
       .delete(matchupsTable)
-      .where(
-        eq(matchupsTable.tournamentId, Number(validatedData.tournamentId)),
-      );
+      .where(eq(matchupsTable.tournamentId, validatedData.tournamentId));
 
     // create enough blank teams
     const ts = await db
@@ -101,7 +91,7 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
       .values(
         teams.map((_player, index) => ({
           name: `Team ${index + 1}`, // Team 1, Team 2, etc.
-          tournamentId: Number(validatedData.tournamentId),
+          tournamentId: validatedData.tournamentId,
         })),
       )
       .returning();
@@ -113,7 +103,7 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
         players.map((player) => ({
           teamId: team.id,
           userId: player.id,
-          tournamentId: Number(validatedData.tournamentId),
+          tournamentId: validatedData.tournamentId,
         })),
       );
     }
@@ -126,7 +116,7 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
           await db.insert(matchupsTable).values({
             team1Id: ts[team1Idx].id,
             team2Id: ts[team2Idx].id,
-            tournamentId: Number(validatedData.tournamentId),
+            tournamentId: validatedData.tournamentId,
             roundNumber: roundIdx + 1,
           });
         }
@@ -149,9 +139,9 @@ export async function moveToTeamAction({
   userId,
   newTeamId,
 }: {
-  tournamentId: number;
-  userId: number;
-  newTeamId: number;
+  tournamentId: string;
+  userId: string;
+  newTeamId: string;
 }) {
   const result = await withActionResult(async () => {
     await db
@@ -174,8 +164,8 @@ export async function removeFromTeamAndCheckOutAction({
   tournamentId,
   userId,
 }: {
-  tournamentId: number;
-  userId: number;
+  tournamentId: string;
+  userId: string;
 }) {
   const result = await withActionResult(async () => {
     await db

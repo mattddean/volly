@@ -1,4 +1,4 @@
-// bun run src/app/scripts/checkin-all-users.ts
+// bun run src/app/scripts/check-in-all-users.ts
 
 import { db } from "~/db";
 import { checkinsTable } from "~/db/schema";
@@ -8,9 +8,8 @@ async function main() {
 
   await db.insert(checkinsTable).values(
     users.map((user) => ({
-      attendeeSetId: 1,
       userId: user.id,
-      tournamentId: 1,
+      tournamentId: "1", // change this to the appropriate tournament id
     })),
   );
 }
