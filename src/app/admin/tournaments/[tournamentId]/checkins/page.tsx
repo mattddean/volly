@@ -42,6 +42,8 @@ export default async function TournamentHomePage({
       </ul>
 
       <CheckInAllPlayersButton tournamentId={tournamentId} />
+
+      <div className="h-4" />
     </div>
   );
 }

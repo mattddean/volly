@@ -17,14 +17,50 @@ export async function checkInAllPlayersAction({
     });
     if (!tournament) throw new Error("Tournament not found");
 
+    // Get all users
     const users = await db.query.usersTable.findMany({});
 
-    await db.insert(checkinsTable).values(
-      users.map((user) => ({
-        userId: user.id,
-        tournamentId,
-      })),
+    // Get existing check-ins for this tournament
+    const existingCheckins = await db.query.checkinsTable.findMany({
+      where: eq(checkinsTable.tournamentId, tournamentId),
+    });
+
+    // Create a map of user IDs to their check-in records
+    const checkinsByUserId = new Map(
+      existingCheckins.map((checkin) => [checkin.userId, checkin]),
     );
+
+    // Users who need a new check-in created
+    const usersToInsert = users.filter(
+      (user) => !checkinsByUserId.has(user.id),
+    );
+
+    // Users who need their existing check-in updated (were checked out)
+    const checkinsToUpdate = existingCheckins.filter(
+      (checkin) => checkin.checkedOutAt !== null,
+    );
+
+    // Insert new check-ins
+    if (usersToInsert.length > 0) {
+      await db.insert(checkinsTable).values(
+        usersToInsert.map((user) => ({
+          userId: user.id,
+          tournamentId,
+        })),
+      );
+    }
+
+    // Update check-ins for users who were checked out
+    if (checkinsToUpdate.length > 0) {
+      for (const checkin of checkinsToUpdate) {
+        await db
+          .update(checkinsTable)
+          .set({ checkedOutAt: null })
+          .where(eq(checkinsTable.id, checkin.id));
+      }
+    }
+
+    revalidatePath(`/admin/tournaments/${tournamentId}/checkins`);
   }, "Failed to check in all players");
 
   return result.response;
