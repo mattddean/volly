@@ -1,4 +1,5 @@
 import { ReportableError } from "~/lib/errors/reportable-error";
+import { unstable_rethrow as rethrow } from "next/navigation";
 
 export type WithActionResult<T> =
   | {
@@ -41,6 +42,8 @@ export async function withActionResult<R>(
       },
     };
   } catch (error: unknown) {
+    rethrow(error);
+
     const monitorMessage = await (async () => {
       if (error instanceof ReportableError && error.noMonitor) {
         return errorMessage;

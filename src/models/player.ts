@@ -19,20 +19,32 @@ export class Player {
   pointsAllowed: number;
   skillGroupRating: number;
 
-  constructor(
-    id: number,
-    name: string,
-    skillGroup: string,
-    zScore = 100.0,
-    sigma = 100.0,
-    lastPlayed: Date | null = null,
-  ) {
+  constructor({
+    id,
+    name,
+    skillGroup,
+    zScore,
+    sigma,
+    lastPlayed,
+  }: {
+    /** Database ID */
+    id: number;
+    name: string;
+    /** A-F where A is best */
+    skillGroup?: string;
+    /** TrueSkill rating (mu) */
+    zScore?: number;
+    /** Uncertainty/confidence interval. Decreases as we get more confident in the player's zScore. */
+    sigma?: number;
+    /** Last time the player played */
+    lastPlayed?: Date;
+  }) {
     this.id = id;
     this.name = name;
-    this.skillGroup = skillGroup; // A-F where A is best
-    this.zScore = zScore; // TrueSkill rating (mu)
-    this.sigma = sigma; // Uncertainty/confidence interval
-    this.lastPlayed = lastPlayed || new Date();
+    this.skillGroup = skillGroup ?? "E";
+    this.zScore = zScore ?? Player.getSkillMap()[this.skillGroup];
+    this.sigma = sigma ?? 100;
+    this.lastPlayed = lastPlayed ?? new Date();
 
     // Player chemistry tracking
     this.chemistry = {}; // playerName -> chemistry score
@@ -132,14 +144,14 @@ export class Player {
 
   // Create a player from data object
   static fromObject(obj: any): Player {
-    const player = new Player(
-      0, // TODO: clean this up
-      obj["Name"],
-      obj["Skill_Group"],
-      Number.parseFloat(obj["Z_Score"]),
-      Number.parseFloat(obj["Sigma"]),
-      obj["LastPlayed"] ? new Date(obj["LastPlayed"]) : new Date(),
-    );
+    const player = new Player({
+      id: 0, // TODO: clean this up
+      name: obj["Name"],
+      skillGroup: obj["Skill_Group"],
+      zScore: Number.parseFloat(obj["Z_Score"]),
+      sigma: Number.parseFloat(obj["Sigma"]),
+      lastPlayed: obj["LastPlayed"] ? new Date(obj["LastPlayed"]) : new Date(),
+    });
 
     player.gamesPlayed = Number.parseInt(obj["GamesPlayed"] || "0");
     player.wins = Number.parseInt(obj["Wins"] || "0");

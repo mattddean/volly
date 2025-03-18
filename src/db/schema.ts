@@ -7,6 +7,7 @@ export const usersTable = sqliteTable("users", {
   skillGroup: text("skill_group").notNull(),
   zScore: integer("z_score").notNull(),
   sigma: integer("sigma").notNull(),
+  /** yyyy-MM-dd */
   lastPlayedDay: text("last_played_day").notNull(),
   gamesPlayed: integer("games_played").notNull(),
   wins: integer("wins").notNull(),

@@ -19,22 +19,29 @@ import {
   FormMessage,
   FormField,
 } from "~/components/ui/form";
-import { checkin } from "./actions";
+import { checkInAction } from "./actions";
 import type { SelectUser } from "~/db/schema";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { toast } from "~/components/ui/sonner";
 
-export function CheckinForm({ users }: { users: SelectUser[] }) {
+export function CheckinForm({
+  users,
+  workbookId,
+}: {
+  users: SelectUser[];
+  workbookId: string;
+}) {
   const form = useForm<CheckinSchema>({
     resolver: zodResolver(checkinSchema),
     defaultValues: {
       userId: "0",
+      workbookId,
     },
   });
 
   async function onSubmit(data: CheckinSchema) {
-    const response = await checkin(data);
+    const response = await checkInAction(data);
     if (response.error) {
       toast.error(response.error.message);
     } else {
@@ -49,22 +56,25 @@ export function CheckinForm({ users }: { users: SelectUser[] }) {
       <div className="justify-center items-center flex h-full min-h-screen">
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-6 w-full max-w-sm"
+          className="space-y-6 w-full max-w-sm bg-sky-green-light p-6 rounded-lg border border-gray-200 shadow-md"
         >
-          <div>Please find yourself in this list</div>
+          <h3 className="text-xl font-bold text-sky-green-gradient">
+            Check In
+          </h3>
+
           <FormField
             control={form.control}
             name="userId"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel>Name</FormLabel>
+                <FormLabel className="text-sky-700">Name</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value.toString()}
                 >
                   <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a verified email to display" />
+                    <SelectTrigger className="w-full border-sky-200 focus:border-[var(--sky-500)] focus:ring-[var(--sky-500)]">
+                      <SelectValue placeholder="Select your name" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -81,9 +91,16 @@ export function CheckinForm({ users }: { users: SelectUser[] }) {
           />
 
           <div className="flex gap-x-2">
-            <Button>Check in</Button>
-            <Button variant="secondary" asChild type="button">
-              <Link href={`${pathname}/new`}>I&rsquo;m new</Link>
+            <Button className="bg-sky-gradient text-white hover:bg-sky-600">
+              Check in
+            </Button>
+            <Button
+              variant="outline"
+              asChild
+              type="button"
+              className="border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
+            >
+              <Link href={`${pathname}/new`}>I&rsquo;m new!</Link>
             </Button>
           </div>
         </form>

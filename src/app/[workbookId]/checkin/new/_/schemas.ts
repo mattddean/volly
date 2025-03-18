@@ -1,7 +1,9 @@
 import { z } from "zod";
+import { zStr } from "~/lib/forms/zod";
 
 export const newUserSchema = z.object({
-  name: z.string(),
+  name: zStr,
+  workbookId: zStr,
 });
 
 export type NewUserSchema = z.infer<typeof newUserSchema>;
