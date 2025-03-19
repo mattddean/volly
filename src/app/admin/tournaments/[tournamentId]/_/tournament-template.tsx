@@ -41,6 +41,12 @@ export async function TournamentTemplate({
               Checkins
             </Link>
             <Link
+              href={`/admin/tournaments/${tournamentId}/teams`}
+              className="px-4 py-2 bg-yellow-500 text-white rounded-md transition-colors hover:bg-yellow-600"
+            >
+              Teams
+            </Link>
+            <Link
               href={`/admin/tournaments/${tournamentId}/matchups`}
               className="px-4 py-2 bg-sky-gradient text-white rounded-md transition-colors hover:from-[var(--sky-700)] hover:to-[var(--sky-700)]"
             >

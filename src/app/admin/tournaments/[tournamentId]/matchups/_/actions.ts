@@ -145,74 +145,13 @@ export async function createTeamsAndMatchupsAction(data: GenerateTeamsSchema) {
       }
     }
 
-    revalidatePath(`${validatedData.tournamentId}/matchups`);
+    revalidatePath(`/admin/tournaments/${validatedData.tournamentId}/matchups`);
 
     return {
       numTeams: teams.length,
       hasMatchups: schedule && schedule.length > 0,
     };
   }, "Unable to create teams and matchups");
-
-  return result.response;
-}
-
-export async function moveToTeamAction({
-  tournamentId,
-  userId,
-  newTeamId,
-}: {
-  tournamentId: string;
-  userId: string;
-  newTeamId: string;
-}) {
-  const result = await withActionResult(async () => {
-    await db
-      .update(teamsUsersTable)
-      .set({ teamId: newTeamId })
-      .where(
-        and(
-          eq(teamsUsersTable.userId, userId),
-          eq(teamsUsersTable.tournamentId, tournamentId),
-        ),
-      );
-
-    revalidatePath(`${tournamentId}/matchups`);
-  }, "Unable to move player to team");
-
-  return result.response;
-}
-
-export async function removeFromTeamAndCheckOutAction({
-  tournamentId,
-  userId,
-}: {
-  tournamentId: string;
-  userId: string;
-}) {
-  const result = await withActionResult(async () => {
-    await db
-      .delete(teamsUsersTable)
-      .where(
-        and(
-          eq(teamsUsersTable.userId, userId),
-          eq(teamsUsersTable.tournamentId, tournamentId),
-        ),
-      );
-
-    await db
-      .update(checkinsTable)
-      .set({
-        checkedOutAt: new Date().toISOString(),
-      })
-      .where(
-        and(
-          eq(checkinsTable.userId, userId),
-          eq(checkinsTable.tournamentId, tournamentId),
-        ),
-      );
-
-    revalidatePath(`${tournamentId}/matchups`);
-  }, "Unable to remove from team and check out");
 
   return result.response;
 }
