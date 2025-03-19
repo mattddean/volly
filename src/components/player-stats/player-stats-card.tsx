@@ -15,14 +15,11 @@ export async function PlayerStatsCard({ playerId }: { playerId: string }) {
   const colorClasses = {
     header: "bg-red-100 text-red-800",
     border: "border-red-200",
-    card: "bg-white shadow-red",
     stats: "bg-red-50 text-red-700",
   };
 
   return (
-    <div
-      className={`rounded-lg p-4 shadow-sm h-full border ${colorClasses.border} ${colorClasses.card}`}
-    >
+    <div className="rounded-lg p-4 h-full">
       <div className="flex flex-col gap-4">
         {/* Player Name */}
         <div
