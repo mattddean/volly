@@ -4,27 +4,25 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "~/lib/utils";
 
-export function TournamentNavTabs({
-  tournamentId,
-}: {
-  tournamentId: string;
-}) {
+export function TournamentNavTabs() {
   const pathname = usePathname();
+
+  const basePath = pathname.split("/").slice(0, -1).join("/");
 
   const tabs = [
     {
       name: "Checkins",
-      href: `/admin/tournaments/${tournamentId}/checkins`,
+      href: `${basePath}/checkins`,
       baseColor: "green",
     },
     {
       name: "Teams",
-      href: `/admin/tournaments/${tournamentId}/teams`,
+      href: `${basePath}/teams`,
       baseColor: "yellow",
     },
     {
       name: "Matchups",
-      href: `/admin/tournaments/${tournamentId}/matchups`,
+      href: `${basePath}/matchups`,
       baseColor: "sky",
     },
   ];

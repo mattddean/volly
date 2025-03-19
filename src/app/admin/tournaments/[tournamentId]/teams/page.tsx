@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { TournamentTemplate } from "../_/tournament-template";
 import { FullPageLoading } from "~/components/full-page-loading";
 import { db } from "~/db";
 import { eq } from "drizzle-orm";
@@ -33,8 +32,6 @@ async function Suspended({
 
   return (
     <>
-      <TournamentTemplate tournamentId={tournamentId} />
-
       <div className="flex flex-col gap-y-8 px-16 py-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {teams.map((team) => (

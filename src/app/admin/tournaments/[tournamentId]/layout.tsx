@@ -1,21 +1,17 @@
 import { eq } from "drizzle-orm";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { db } from "~/db";
 import { tournamentsTable } from "~/db/schema";
-import { TournamentNavTabs } from "./tournament-nav-tabs";
+import { Suspense } from "react";
+import { TournamentNavTabs } from "./_/tournament-nav-tabs";
 
-export async function TournamentTemplate({
-  tournamentId,
-}: {
-  tournamentId: string;
-}) {
-  const tournament = await db.query.tournamentsTable.findFirst({
-    where: eq(tournamentsTable.id, tournamentId),
-  });
-  if (!tournament) notFound();
+interface Props {
+  children: React.ReactNode;
+  params: Promise<{ tournamentId: string }>;
+}
 
+export default async function AdminLayout({ children, params }: Props) {
   return (
     <div className="relative">
       {/* Floating Navigation Bar */}
@@ -30,14 +26,31 @@ export async function TournamentTemplate({
             </Link>
 
             <h1 className="text-center whitespace-nowrap text-lg font-bold text-sky-700">
-              Tournament {tournament.name}
+              Tournament{" "}
+              <Suspense>
+                <TournamentName params={params} />
+              </Suspense>
             </h1>
           </div>
 
-          <TournamentNavTabs tournamentId={tournamentId} />
+          <Suspense>
+            <TournamentNavTabs />
+          </Suspense>
         </div>
         <div className="h-26" />
+
+        {children}
       </div>
     </div>
   );
+}
+
+async function TournamentName({ params }: { params: Props["params"] }) {
+  const { tournamentId } = await params;
+
+  const tournament = await db.query.tournamentsTable.findFirst({
+    where: eq(tournamentsTable.id, tournamentId),
+  });
+
+  return tournament?.name;
 }

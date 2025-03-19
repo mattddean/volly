@@ -1,7 +1,6 @@
 import { GenerateTeamsForm } from "./_/form";
 import { TeamGrid } from "./_/team-grid";
 import { Suspense } from "react";
-import { TournamentTemplate } from "../_/tournament-template";
 import { FullPageLoading } from "~/components/full-page-loading";
 
 interface Props {
@@ -25,8 +24,6 @@ async function Suspended({
 
   return (
     <>
-      <TournamentTemplate tournamentId={tournamentId} />
-
       <div className="flex flex-col gap-y-12 px-16">
         <GenerateTeamsForm tournamentId={tournamentId}>
           <Suspense fallback={<FullPageLoading />}>

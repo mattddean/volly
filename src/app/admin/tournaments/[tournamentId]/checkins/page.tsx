@@ -3,7 +3,6 @@ import { checkinsTable, tournamentsTable } from "~/db/schema";
 import { db } from "~/db";
 import { notFound } from "next/navigation";
 import { CheckInAllPlayersButton, DeleteCheckInButton } from "./_/buttons";
-import { TournamentTemplate } from "../_/tournament-template";
 import { Suspense } from "react";
 import { FullPageLoading } from "~/components/full-page-loading";
 import { Button } from "~/components/ui/button";
@@ -42,8 +41,6 @@ async function Suspended({
 
   return (
     <>
-      <TournamentTemplate tournamentId={tournamentId} />
-
       <div className="flex flex-col items-center justify-center h-full gap-y-4">
         <Button asChild variant="link">
           <Link href={`/tournaments/${tournamentId}/check-in`} target="_blank">
