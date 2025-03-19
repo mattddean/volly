@@ -1,6 +1,4 @@
-"use client";
-
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { ComponentProps } from "react";
 import { Button } from "~/components/ui/button";
 
@@ -14,15 +12,11 @@ export function PlayerStatsTrigger({
   children,
   ...props
 }: PlayerStatsTriggerProps) {
-  const router = useRouter();
-
-  const onClick = () => {
-    router.push(`/player/${playerId}`, { scroll: false });
-  };
-
   return (
-    <Button onClick={onClick} type="button" variant="ghost" {...props}>
-      {children}
+    <Button type="button" variant="ghost" asChild {...props}>
+      <Link href={`/player/${playerId}`} prefetch>
+        {children}
+      </Link>
     </Button>
   );
 }
