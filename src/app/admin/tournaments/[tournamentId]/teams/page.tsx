@@ -43,7 +43,7 @@ async function Suspended({
               team={team}
               otherTeams={teams}
               tournamentId={tournamentId}
-              teamColor="sky"
+              teamColor="yellow"
             />
           ))}
         </div>

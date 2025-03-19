@@ -23,11 +23,14 @@ export function TeamCard({
     | null;
   otherTeams: SelectTeam[];
   tournamentId: string;
-  teamColor?: "sky" | "green";
+  teamColor?: "sky" | "green" | "yellow";
 }) {
   if (!team) return null;
 
-  const colorClasses = {
+  const colorClasses: Record<
+    TeamColor,
+    { header: string; border: string; card: string; stats: string }
+  > = {
     sky: {
       header: "bg-sky-100 text-sky-800",
       border: "border-sky-200",
@@ -39,6 +42,12 @@ export function TeamCard({
       border: "border-green-200",
       card: "bg-white shadow-green",
       stats: "bg-green-50 text-green-700",
+    },
+    yellow: {
+      header: "bg-yellow-100 text-yellow-800",
+      border: "border-yellow-200",
+      card: "bg-white shadow-yellow",
+      stats: "bg-yellow-50 text-yellow-700",
     },
   };
 
@@ -117,3 +126,5 @@ export function TeamCard({
     </div>
   );
 }
+
+type TeamColor = "sky" | "green" | "yellow";
