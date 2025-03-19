@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "~/db";
 import { tournamentsTable } from "~/db/schema";
+import { TournamentNavTabs } from "./tournament-nav-tabs";
 
 export async function TournamentTemplate({
   tournamentId,
@@ -33,26 +34,7 @@ export async function TournamentTemplate({
             </h1>
           </div>
 
-          <div className="flex justify-center gap-3">
-            <Link
-              href={`/admin/tournaments/${tournamentId}/checkins`}
-              className="px-4 py-2 bg-green-gradient text-white rounded-md transition-colors hover:from-[var(--green-700)] hover:to-[var(--green-700)]"
-            >
-              Checkins
-            </Link>
-            <Link
-              href={`/admin/tournaments/${tournamentId}/teams`}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-md transition-colors hover:bg-yellow-600"
-            >
-              Teams
-            </Link>
-            <Link
-              href={`/admin/tournaments/${tournamentId}/matchups`}
-              className="px-4 py-2 bg-sky-gradient text-white rounded-md transition-colors hover:from-[var(--sky-700)] hover:to-[var(--sky-700)]"
-            >
-              Matchups
-            </Link>
-          </div>
+          <TournamentNavTabs tournamentId={tournamentId} />
         </div>
         <div className="h-26" />
       </div>
