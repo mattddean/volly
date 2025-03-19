@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { Button } from "~/components/ui/button";
 import { checkInAllPlayersAction, deleteCheckinAction } from "./actions";
 import { toast } from "~/components/ui/sonner";
-import { TrashIcon } from "lucide-react";
+import { Loader2Icon, XIcon } from "lucide-react";
 
 export function CheckInAllPlayersButton({
   tournamentId,
@@ -53,8 +53,18 @@ export function DeleteCheckInButton({
   }
 
   return (
-    <Button variant="outline" size="icon" onClick={onClick} loading={isPending}>
-      <TrashIcon className="w-4 h-4" />
+    <Button
+      variant="destructive"
+      size="icon"
+      onClick={onClick}
+      className="size-7"
+      disabled={isPending}
+    >
+      {isPending ? (
+        <Loader2Icon className="size-4 animate-spin" />
+      ) : (
+        <XIcon className="size-4" />
+      )}
     </Button>
   );
 }

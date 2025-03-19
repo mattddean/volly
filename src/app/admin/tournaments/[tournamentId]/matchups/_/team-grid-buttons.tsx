@@ -5,6 +5,7 @@ import { Button } from "~/components/ui/button";
 import { useTransition } from "react";
 import { moveToTeamAction, removeFromTeamAndCheckOutAction } from "./actions";
 import { toast } from "~/components/ui/sonner";
+import { Loader2Icon, XIcon } from "lucide-react";
 
 export function MoveToTeamButton({
   team,
@@ -69,8 +70,13 @@ export function CheckOutButton({
       type="button"
       variant="destructive"
       onClick={onClick}
-      loading={isPending}
+      disabled={isPending}
     >
+      {isPending ? (
+        <Loader2Icon className="size-4 animate-spin" />
+      ) : (
+        <XIcon className="size-4" />
+      )}
       Remove and Check Out
     </Button>
   );
