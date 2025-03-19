@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Volly",
   description: "come have some fun",
+  appleWebApp: {
+    title: "Volly",
+  },
 };
 
 export default async function RootLayout({
