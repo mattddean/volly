@@ -9,6 +9,7 @@ import {
   CheckOutButton,
   MoveToTeamButton,
 } from "~/components/team-card/team-grid-buttons";
+import { PlayerStatsTrigger } from "../player-stats/player-stats-trigger";
 
 export function TeamCard({
   team,
@@ -95,7 +96,12 @@ export function TeamCard({
               className="py-1 flex justify-between items-center"
               key={user.userId}
             >
-              <div className="whitespace-nowrap">{usr?.name}</div>
+              {usr && (
+                <PlayerStatsTrigger playerId={usr?.id}>
+                  <div className="whitespace-nowrap">{usr?.name}</div>
+                </PlayerStatsTrigger>
+              )}
+
               {usr && (
                 <Popover>
                   <PopoverTrigger

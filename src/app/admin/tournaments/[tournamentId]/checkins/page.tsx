@@ -8,6 +8,7 @@ import { FullPageLoading } from "~/components/full-page-loading";
 import { Button } from "~/components/ui/button";
 import Link from "next/link";
 import { ExternalLinkIcon } from "lucide-react";
+import { PlayerStatsTrigger } from "~/components/player-stats/player-stats-trigger";
 
 interface Props {
   params: Promise<{ tournamentId: string }>;
@@ -55,7 +56,9 @@ async function Suspended({
               key={checkin.id}
               className="flex justify-between items-center gap-x-4 p-3"
             >
-              {checkin.user.name}
+              <PlayerStatsTrigger playerId={checkin.user.id}>
+                {checkin.user.name}
+              </PlayerStatsTrigger>
               <DeleteCheckInButton
                 checkin={checkin}
                 tournamentId={tournamentId}

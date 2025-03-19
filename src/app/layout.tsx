@@ -21,19 +21,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
-}: Readonly<{
+  modal,
+}: {
   children: React.ReactNode;
-}>) {
-  "use cache";
-
+  modal: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-y-scroll`}
       >
         {children}
+        {modal}
         <Toaster position="bottom-center" />
       </body>
     </html>
