@@ -1,7 +1,7 @@
+import { defineOperation } from "@echo/core"; // adjust path as needed
+import { ServerContext } from "@echo/server"; // adjust path as needed
 import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { z } from "zod";
-import { defineOperation } from "~/lib/echo/core"; // adjust path as needed
-import { ServerContext } from "~/lib/echo/server"; // adjust path as needed
 import { createPostgresAdapter } from "./adapter";
 
 // example schema definition using drizzle

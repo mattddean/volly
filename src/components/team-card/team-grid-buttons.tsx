@@ -1,11 +1,11 @@
 "use client";
 
+import { ClientContext, setupSync, useOperation } from "@echo/client";
 import { Loader2Icon, XIcon } from "lucide-react";
 import { useTransition } from "react";
 import { Button } from "~/components/ui/button";
 import { toast } from "~/components/ui/sonner";
 import type { SelectTeam, SelectUser } from "~/db/schema";
-import { ClientContext, setupSync, useOperation } from "~/lib/echo/client";
 import { moveToTeam } from "~/lib/operations/teams_users";
 import { removeFromTeamAndCheckOutAction } from "./actions";
 

@@ -1,7 +1,7 @@
+import type { QueryBuilder, TableAdapter } from "@echo/types";
 import { PGlite } from "@electric-sql/pglite";
-import { drizzle, type DrizzleClient } from "drizzle-orm/pglite";
-import { eq, and, type SQL } from "drizzle-orm";
-import type { TableAdapter, QueryBuilder } from "~/lib/echo/types";
+import { and, eq, type SQL } from "drizzle-orm";
+import { type DrizzleClient, drizzle } from "drizzle-orm/pglite";
 import { getIdColumn } from "./utils";
 
 /**

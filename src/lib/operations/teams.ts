@@ -1,6 +1,6 @@
-import { defineOperation } from "~/lib/echo/core";
-import * as schema from "~/db/schema";
+import { defineOperation } from "@echo/core";
 import { z } from "zod";
+import * as schema from "~/db/schema";
 
 export const addTeam = defineOperation({
   name: "addTeam",
