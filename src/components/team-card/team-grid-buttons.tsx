@@ -1,21 +1,14 @@
 "use client";
 
-import { ClientContext, setupSync, useOperation } from "@echo/client";
 import { Loader2Icon, XIcon } from "lucide-react";
 import { useTransition } from "react";
 import { Button } from "~/components/ui/button";
 import { toast } from "~/components/ui/sonner";
 import type { SelectTeam, SelectUser } from "~/db/schema";
+import { useOperation } from "~/echo/client";
+import { useEchoContext } from "~/lib/echo/client/context";
 import { moveToTeam } from "~/lib/echo/operations/teams_users";
 import { removeFromTeamAndCheckOutAction } from "./actions";
-
-// todo: this setup should ideally be done once at the app level
-const wasmDb = {} as any; // placeholder
-const clientCtx = new ClientContext(wasmDb, {});
-// todo: replace with actual WebSocket URL from env or config
-const syncClient = setupSync(
-  process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001/ws",
-);
 
 export function MoveToTeamButton({
   team,
@@ -26,6 +19,7 @@ export function MoveToTeamButton({
   user: SelectUser;
   tournamentId: string;
 }) {
+  const { syncClient, clientCtx } = useEchoContext();
   const [isPending, startTransition] = useTransition();
   const { execute: executeMoveToTeam } = useOperation(
     moveToTeam,

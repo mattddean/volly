@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { teamsUsersTable } from "~/db/schema";
-import { defineOperation } from "~/lib/echo/setup";
+import { defineOperation } from "~/lib/echo/server/helpers";
 
 const moveToTeamInput = z.object({
   tournamentId: z.string(),

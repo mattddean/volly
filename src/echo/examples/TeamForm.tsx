@@ -1,7 +1,7 @@
 import type React from "react";
 import { useState } from "react";
-import { addTeam, updateTeam } from "./team-operations";
 import { ClientContext, setupSync, useOperation } from "../client";
+import { addTeam, updateTeam } from "./team-operations";
 
 // initialize client (in a real app this would be done once at the app level)
 const wasmDb = {} as any; // placeholder for a WASM database adapter
@@ -73,7 +73,7 @@ export function TeamForm({ tournamentId, existingTeam }: TeamFormProps) {
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-4">
-        <label htmlFor="name" className="block text-sm font-medium">
+        <label htmlFor="name" className="block font-medium text-sm">
           Team Name
         </label>
         <input
@@ -88,12 +88,12 @@ export function TeamForm({ tournamentId, existingTeam }: TeamFormProps) {
       </div>
 
       {error && (
-        <div className="mb-4 p-2 bg-red-100 text-red-800 rounded">{error}</div>
+        <div className="mb-4 rounded bg-red-100 p-2 text-red-800">{error}</div>
       )}
 
       <button
         type="submit"
-        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+        className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 font-medium text-sm text-white shadow-sm hover:bg-blue-700"
         disabled={isSubmitting}
       >
         {isSubmitting

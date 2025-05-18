@@ -1,10 +1,10 @@
-import { isClient } from "./core";
+import { isClient } from "../core";
 import {
   ClientOperationContext,
   type Operation,
   OptimisticUpdateConflict,
   TSchemaType,
-} from "./types";
+} from "../types";
 
 // make sure this file is only used on the client
 if (!isClient) {

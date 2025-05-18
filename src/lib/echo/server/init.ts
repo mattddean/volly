@@ -26,7 +26,10 @@ export async function initializeServer() {
   );
 
   // create websocket server
-  const wss = new WebSocketServer({ port: 8080 });
+  const wss = new WebSocketServer({
+    port: parseInt(process.env.WS_PORT!),
+    path: process.env.WS_PATH!,
+  });
 
   // setup realtime updates
   setupWebSocketServer(wss, operationRegistry);

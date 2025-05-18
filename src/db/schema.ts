@@ -61,6 +61,7 @@ export const teamsTable = pgTable("teams", {
 
   // echo
   version: bigint("version", { mode: "number" }).notNull().default(0),
+  deletedAt: timestamp("deleted_at"),
 });
 
 export const checkinsTable = pgTable(

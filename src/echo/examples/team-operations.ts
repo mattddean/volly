@@ -1,24 +1,13 @@
-import { defineOperation } from "../core";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { z } from "zod"; // we need to add zod as a dependency
-
-// example schema (in a real app, this would be from your actual schema)
-const teamSchema = {
-  table: "teams",
-  fields: {
-    id: "string",
-    name: "string",
-    tournamentId: "string",
-    createdAt: "date",
-    version: "number",
-  },
-};
+import { teamsTable } from "~/db/schema";
+import { defineOperation } from "~/lib/echo/server/helpers";
 
 /**
  * add a new team
  */
 export const addTeam = defineOperation({
   name: "addTeam",
-  schema: teamSchema,
   // input validation with zod
   input: z.object({
     name: z.string(),
@@ -34,7 +23,7 @@ export const addTeam = defineOperation({
       version: 1, // initial version
     };
 
-    return ctx.db.teams.insert(newTeam);
+    return ctx.db.insert(teamsTable).values(newTeam);
   },
 });
 
@@ -43,30 +32,38 @@ export const addTeam = defineOperation({
  */
 export const updateTeam = defineOperation({
   name: "updateTeam",
-  schema: teamSchema,
   // input validation with zod
   input: z.object({
     id: z.string(),
     name: z.string(),
-    version: z.number(), // current version for concurrency control
+    version: z.number(),
   }),
   // custom conflict strategy
   conflictStrategy: "merge",
   // executes on both client and server
   execute: async (ctx, input) => {
-    const result = await ctx.db.teams.updateWhere(
-      { id: input.id, version: input.version },
-      {
+    const result = await ctx.db
+      .update(teamsTable)
+      .set({
         name: input.name,
-        version: input.version + 1, // increment version
-      },
-    );
+        version: input.version + 1,
+      })
+      .where(
+        and(
+          eq(teamsTable.id, input.id),
+          // for concurrency control. TODO: do we really need this?
+          eq(teamsTable.version, input.version),
+        ),
+      )
+      .returning();
 
-    if (result.affectedRows === 0) {
+    const row = result[0];
+
+    if (!row) {
       throw new Error("Team was modified concurrently");
     }
 
-    return result.row;
+    return row;
   },
 });
 
@@ -75,16 +72,15 @@ export const updateTeam = defineOperation({
  */
 export const getTeamsByTournament = defineOperation({
   name: "getTeamsByTournament",
-  schema: teamSchema,
   // input validation with zod
   input: z.object({
     tournamentId: z.string(),
   }),
   // executes on both client and server
   execute: async (ctx, input) => {
-    return ctx.db.teams.findMany({
-      where: { tournamentId: input.tournamentId },
-      orderBy: { id: "asc" },
+    return ctx.db.query.teamsTable.findMany({
+      where: eq(teamsTable.tournamentId, input.tournamentId),
+      orderBy: asc(teamsTable.id),
     });
   },
 });
@@ -94,7 +90,6 @@ export const getTeamsByTournament = defineOperation({
  */
 export const deleteTeam = defineOperation({
   name: "deleteTeam",
-  schema: teamSchema,
   // input validation with zod
   input: z.object({
     id: z.string(),
@@ -102,12 +97,15 @@ export const deleteTeam = defineOperation({
   }),
   // executes on both client and server
   execute: async (ctx, input) => {
-    const result = await ctx.db.teams.updateWhere(
-      { id: input.id, version: input.version },
-      { deleted: true, version: input.version + 1 },
-    );
+    const result = await ctx.db
+      .update(teamsTable)
+      .set({ deletedAt: sql`NOW()`, version: input.version + 1 })
+      .where(
+        and(eq(teamsTable.id, input.id), eq(teamsTable.version, input.version)),
+      )
+      .returning();
 
-    if (result.affectedRows === 0) {
+    if (result.length === 0) {
       throw new Error("Team was modified concurrently");
     }
 

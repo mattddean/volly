@@ -1,8 +1,12 @@
 import { eq } from "drizzle-orm";
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { PgTable } from "drizzle-orm/pg-core";
 import { isClient } from "./core";
-import { type OperationContext, ServerOperationContext } from "./types";
+import {
+  type OperationContext,
+  ServerOperationContext,
+  TSchemaType,
+} from "./types";
 
 // make sure this file is only used on the server
 if (isClient) {
@@ -12,7 +16,7 @@ if (isClient) {
 /**
  * server context implementation
  */
-export class ServerContext<TSchema extends Record<string, PgTable>>
+export class ServerContext<TSchema extends TSchemaType>
   implements ServerOperationContext<TSchema>
 {
   public client: false = false;
@@ -44,7 +48,7 @@ export class ServerContext<TSchema extends Record<string, PgTable>>
 /**
  * register operations on the server
  */
-export function registerOperations<TSchema extends Record<string, PgTable>>(
+export function registerOperations<TSchema extends TSchemaType>(
   operations: Record<string, any>,
   context: ServerContext<TSchema>,
 ) {

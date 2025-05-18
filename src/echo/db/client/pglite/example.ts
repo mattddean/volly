@@ -1,13 +1,13 @@
-import { text, integer, pgTable } from "drizzle-orm/pg-core";
-import { createPgLiteAdapter } from "./adapter";
+import { integer, pgTable, text } from "drizzle-orm/pg-core";
 import { ClientContext } from "../../../client";
+import { createPgLiteAdapter } from "./adapter";
 
 // example schema definition using drizzle
 const teams = pgTable("teams", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   tournamentId: text("tournament_id").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  createdAt: integer("created_at").notNull(),
   version: integer("version").notNull().default(1),
 });
 

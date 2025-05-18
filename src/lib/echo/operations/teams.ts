@@ -1,15 +1,14 @@
-import { defineOperation } from "@echo/core";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "~/db/schema";
+import { defineOperation } from "~/lib/echo/server/helpers";
 
 export const addTeam = defineOperation({
   name: "addTeam",
-  schema: schema.teamsTable,
   input: z.object({
     name: z.string(),
     tournamentId: z.string(),
   }),
-  // This function runs on both client (optimistically) and server (actual)
   execute: async (ctx, input: typeof schema.teamsTable.$inferInsert) => {
     const newTeam = {
       name: input.name,
@@ -17,15 +16,16 @@ export const addTeam = defineOperation({
       createdAt: new Date(),
     };
 
-    return ctx.db.teams.insert(newTeam);
+    return ctx.db.insert(schema.teamsTable).values(newTeam);
   },
 });
 
 export const getTeamsByTournament = defineOperation({
   name: "getTeamsByTournament",
-  schema: schema.teamsTable,
   input: z.object({ tournamentId: z.string() }),
   execute: async (ctx, input: typeof schema.teamsTable.$inferInsert) => {
-    return ctx.db.teams.where({ tournamentId: input.tournamentId }).toArray();
+    return ctx.db.query.teamsTable.findMany({
+      where: eq(schema.teamsTable.tournamentId, input.tournamentId),
+    });
   },
 });

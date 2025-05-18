@@ -5,25 +5,21 @@ import { PgTable } from "drizzle-orm/pg-core";
  * core type definitions for echo optimistic update system
  */
 
-export interface ClientOperationContext<
-  TSchema extends Record<string, PgTable>,
-> {
+export interface ClientOperationContext<TSchema extends TSchemaType> {
   db: NodePgDatabase<TSchema>;
   client: true;
   server: false;
   // can add more context properties later (auth, etc.)
 }
 
-export interface ServerOperationContext<
-  TSchema extends Record<string, PgTable>,
-> {
+export interface ServerOperationContext<TSchema extends TSchemaType> {
   db: NodePgDatabase<TSchema>;
   client: false;
   server: true;
   // can add more context properties later (auth, etc.)
 }
 
-export type OperationContext<TSchema extends Record<string, PgTable>> =
+export type OperationContext<TSchema extends TSchemaType> =
   | ClientOperationContext<TSchema>
   | ServerOperationContext<TSchema>;
 
@@ -53,11 +49,7 @@ export type OperationContext<TSchema extends Record<string, PgTable>> =
 // }
 
 // base operation definition
-export interface Operation<
-  TInput,
-  TOutput,
-  TSchema extends Record<string, PgTable>,
-> {
+export interface Operation<TInput, TOutput, TSchema extends TSchemaType> {
   name: string;
   description?: string;
   // schema: any; // can replace with proper schema type later
@@ -74,11 +66,7 @@ export type ConflictStrategy =
   | "merge"
   | "manual";
 
-export type ConflictResolver<
-  TInput,
-  TOutput,
-  TSchema extends Record<string, PgTable>,
-> = (
+export type ConflictResolver<TInput, TOutput, TSchema extends TSchemaType> = (
   ctx: OperationContext<TSchema>,
   input: TInput,
   clientChange: TOutput,
@@ -92,3 +80,5 @@ export class OptimisticUpdateConflict extends Error {
     this.name = "OptimisticUpdateConflict";
   }
 }
+
+export type TSchemaType = Record<string, PgTable>;
