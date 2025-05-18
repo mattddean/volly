@@ -1,14 +1,14 @@
-import type { SelectTeam, SelectTeamUser, SelectUser } from "~/db/schema";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
 import { EllipsisVerticalIcon } from "lucide-react";
 import {
   CheckOutButton,
   MoveToTeamButton,
 } from "~/components/team-card/team-grid-buttons";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
+import type { SelectTeam, SelectTeamUser, SelectUser } from "~/db/schema";
 import { PlayerStatsTrigger } from "../player-stats/player-stats-trigger";
 
 export function TeamCard({
@@ -56,11 +56,11 @@ export function TeamCard({
 
   return (
     <div
-      className={`rounded-lg p-4 shadow-sm h-full border ${colors.border} ${colors.card}`}
+      className={`h-full rounded-lg border p-4 shadow-sm ${colors.border} ${colors.card}`}
     >
-      <div className="flex flex-col gap-1 mb-3">
+      <div className="mb-3 flex flex-col gap-1">
         <div
-          className={`text-lg font-medium rounded px-2 py-1 ${colors.header}`}
+          className={`rounded px-2 py-1 font-medium text-lg ${colors.header}`}
         >
           {team.name}
         </div>
@@ -68,7 +68,7 @@ export function TeamCard({
         {/* Team Stats */}
         {(team.normalizedAvgZScore !== null || team.chemistry !== null) && (
           <div
-            className={`text-sm rounded px-2 py-1 flex justify-between ${colors.stats}`}
+            className={`flex justify-between rounded px-2 py-1 text-sm ${colors.stats}`}
           >
             {team.normalizedAvgZScore !== null && (
               <div
@@ -88,12 +88,12 @@ export function TeamCard({
           </div>
         )}
       </div>
-      <div className="divide-input divide-y">
+      <div className="divide-y divide-input">
         {team.users.map((user) => {
           const usr = user.user;
           return (
             <div
-              className="py-1 flex justify-between items-center"
+              className="flex items-center justify-between py-1"
               key={user.userId}
             >
               {usr && (
@@ -106,7 +106,7 @@ export function TeamCard({
                 <Popover>
                   <PopoverTrigger
                     type="button"
-                    className="cursor-pointer size-4"
+                    className="size-4 cursor-pointer"
                   >
                     <EllipsisVerticalIcon className="size-full" />
                   </PopoverTrigger>

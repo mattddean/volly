@@ -1,15 +1,15 @@
-import { text, integer, pgTable } from "drizzle-orm/pg-core";
-import { createPostgresAdapter } from "./adapter";
-import { ServerContext } from "~/lib/echo/server"; // adjust path as needed
-import { defineOperation } from "~/lib/echo/core"; // adjust path as needed
+import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { z } from "zod";
+import { defineOperation } from "~/lib/echo/core"; // adjust path as needed
+import { ServerContext } from "~/lib/echo/server"; // adjust path as needed
+import { createPostgresAdapter } from "./adapter";
 
 // example schema definition using drizzle
 const teams = pgTable("teams", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   tournamentId: text("tournament_id").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  createdAt: timestamp("created_at").notNull(),
   version: integer("version").notNull().default(1),
 });
 
@@ -20,12 +20,13 @@ const getTeamById = defineOperation({
   name: "getTeamById",
   schema: teams, // you might link to the Drizzle table object or a custom schema representation
   input: z.object({ id: z.string() }),
-  execute: async (ctx, input) => {
+  execute: async (ctx, input: { id: string }) => {
     return ctx.db.teams.get(input.id);
   },
 });
 
 // example usage
+// biome-ignore lint/correctness/noUnusedVariables: example file
 async function usePostgresServerExample() {
   // connection string for your postgres database
   const connectionString =

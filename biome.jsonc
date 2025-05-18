@@ -19,8 +19,18 @@
       "complexity": "warn",
       "performance": "warn",
       "security": "warn",
-      "style": "warn",
-      "suspicious": "warn"
+      "style": "off",
+      "suspicious": "off",
+      "nursery": {
+        "useSortedClasses": {
+          "fix": "safe",
+          "level": "warn",
+          "options": {
+            "attributes": ["classList"],
+            "functions": ["cn", "clsx", "cva", "tw"]
+          }
+        }
+      }
     }
   },
   "assist": {
