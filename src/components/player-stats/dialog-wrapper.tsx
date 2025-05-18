@@ -17,7 +17,7 @@ export function DialogWrapper({ children }: { children: React.ReactNode }) {
         }
       }}
     >
-      <DialogContent className="size-full max-w-140 max-h-140">
+      <DialogContent className="size-full max-h-140 max-w-140">
         <VisuallyHidden>
           <DialogTitle>Player Stats</DialogTitle>
         </VisuallyHidden>

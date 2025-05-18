@@ -5,9 +5,8 @@ import { useTransition } from "react";
 import { Button } from "~/components/ui/button";
 import { toast } from "~/components/ui/sonner";
 import type { SelectTeam, SelectUser } from "~/db/schema";
-import { useOperation } from "~/echo/client";
-import { useEchoContext } from "~/lib/echo/client/context";
-import { moveToTeam } from "~/lib/echo/operations/teams_users";
+import { useOperation } from "~/lib/echo/client/helpers";
+import { moveToTeam } from "~/lib/echo/operations/teams-users";
 import { removeFromTeamAndCheckOutAction } from "./actions";
 
 export function MoveToTeamButton({
@@ -19,25 +18,18 @@ export function MoveToTeamButton({
   user: SelectUser;
   tournamentId: string;
 }) {
-  const { syncClient, clientCtx } = useEchoContext();
   const [isPending, startTransition] = useTransition();
-  const { execute: executeMoveToTeam } = useOperation(
-    moveToTeam,
-    syncClient,
-    clientCtx,
-  );
+  const moveToTeamOp = useOperation(moveToTeam);
 
   const onClick = () => {
     startTransition(async () => {
+      // TODO: simplify error handling; probably integrate with useMutation from react-query
       try {
-        const result = await executeMoveToTeam({
+        const result = await moveToTeamOp.execute({
           newTeamId: team.id,
           userId: user.id,
           tournamentId,
         });
-        // Assuming the operation returns { success: true, ... } on success
-        // and throws an error or returns an error object on failure.
-        // The current echo operation returns the input on success, so we check for that.
         if (result) {
           toast.success("Moved to team");
         } else {

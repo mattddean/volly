@@ -1,9 +1,10 @@
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { isClient } from "../core";
 import {
-  ClientOperationContext,
+  type ClientOperationContext,
   type Operation,
   OptimisticUpdateConflict,
-  TSchemaType,
+  type TSchemaType,
 } from "../types";
 
 // make sure this file is only used on the client
@@ -142,8 +143,12 @@ export function setupSync(wsUrl: string) {
 /**
  * hook to use operations in components
  */
-export function useOperation<TInput, TOutput, TSchema extends TSchemaType>(
-  operation: Operation<TInput, TOutput, TSchema>,
+export function useOperation<
+  TInputSchema extends StandardSchemaV1,
+  TOutput,
+  TSchema extends TSchemaType,
+>(
+  operation: Operation<TInputSchema, TOutput, TSchema>,
   syncClient: ReturnType<typeof setupSync>,
   clientCtx: ClientContext<TSchema>,
   options: {
@@ -153,17 +158,19 @@ export function useOperation<TInput, TOutput, TSchema extends TSchemaType>(
   // this would normally use react hooks
   // but we'll just return the execute function for now
 
-  const execute = async (input: TInput): Promise<TOutput> => {
+  const execute = async (
+    input: StandardSchemaV1.InferInput<TInputSchema>,
+  ): Promise<TOutput> => {
     try {
       // run optimistically in local database
       const optimisticResult = await operation.execute(clientCtx, input as any);
 
       try {
         // send to server
-        const serverResult = await syncClient.execute<TInput, TOutput>(
-          operation.name,
-          input,
-        );
+        const serverResult = await syncClient.execute<
+          StandardSchemaV1.InferInput<TInputSchema>,
+          TOutput
+        >(operation.name, input);
         return serverResult;
       } catch (err) {
         if (err instanceof OptimisticUpdateConflict) {
@@ -176,14 +183,16 @@ export function useOperation<TInput, TOutput, TSchema extends TSchemaType>(
 
           if (operation.conflictStrategy === "client-wins") {
             // re-apply client changes with forced update
-            return await syncClient.forceExecute<TInput, TOutput>(
-              operation.name,
-              {
-                ...input,
-                _force: true,
-                version: serverState.version,
-              } as TInput & { _force: boolean },
-            );
+            return await syncClient.forceExecute<
+              StandardSchemaV1.InferInput<TInputSchema>,
+              TOutput
+            >(operation.name, {
+              ...(input as any),
+              _force: true,
+              version: serverState.version,
+            } as StandardSchemaV1.InferInput<TInputSchema> & {
+              _force: boolean;
+            });
           } else if (operation.conflictStrategy === "merge") {
             // use custom resolver or default
             const resolved = operation.resolveConflict
@@ -196,10 +205,15 @@ export function useOperation<TInput, TOutput, TSchema extends TSchemaType>(
               : serverState; // fallback to server state
 
             // apply resolution
-            return await syncClient.forceExecute<TInput, TOutput>(
-              operation.name,
-              { ...input, _resolved: resolved } as TInput & { _resolved: any },
-            );
+            return await syncClient.forceExecute<
+              StandardSchemaV1.InferInput<TInputSchema>,
+              TOutput
+            >(operation.name, {
+              ...(input as any),
+              _resolved: resolved,
+            } as StandardSchemaV1.InferInput<TInputSchema> & {
+              _resolved: any;
+            });
           } else if (operation.conflictStrategy === "manual") {
             // surface conflict to UI
             if (options.onConflict) {

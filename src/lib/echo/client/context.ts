@@ -2,11 +2,9 @@ import { createContext, useContext } from "react";
 import type * as schema from "~/db/schema";
 import { ClientContext, setupSync } from "~/echo/client";
 
-const wasmDb = {} as any; // placeholder
+const wasmDb = {} as any;
 const clientCtx = new ClientContext(wasmDb, {});
-const syncClient = setupSync(
-  process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001/ws",
-);
+const syncClient = setupSync(process.env.NEXT_PUBLIC_WS_URL!);
 
 export interface EchoContextType {
   clientCtx: ClientContext<typeof schema>;

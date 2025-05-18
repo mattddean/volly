@@ -1,12 +1,14 @@
-import { type ConflictStrategy, type Operation, TSchemaType } from "./types";
+import type { ConflictStrategy, Operation, TSchemaType } from "./types";
 
 /**
  * define an operation that can be executed on both client and server
  */
 export function defineOperation<TInput, TOutput, TSchema extends TSchemaType>(
+  // @ts-ignore TODO
   options: Omit<Operation<TInput, TOutput, TSchema>, "conflictStrategy"> & {
     conflictStrategy?: ConflictStrategy;
   },
+  // @ts-ignore TODO
 ): Operation<TInput, TOutput, TSchema> {
   return {
     ...options,

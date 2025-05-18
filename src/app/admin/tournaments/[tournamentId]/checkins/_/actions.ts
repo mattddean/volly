@@ -69,11 +69,14 @@ export async function checkInAllPlayersAction({
 export async function deleteCheckinAction({
   checkinId,
   tournamentId,
-}: { checkinId: string; tournamentId: string }) {
+}: {
+  checkinId: string;
+  tournamentId: string;
+}) {
   const result = await withActionResult(async () => {
     await db
       .update(checkinsTable)
-      .set({ checkedOutAt: new Date().toISOString() })
+      .set({ checkedOutAt: new Date() })
       .where(eq(checkinsTable.id, checkinId));
 
     revalidatePath(`/admin/tournaments/${tournamentId}/checkins`);

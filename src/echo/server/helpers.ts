@@ -1,5 +1,5 @@
 import { defineOperation } from "../core";
-import { type Operation, TSchemaType } from "../types";
+import type { Operation, TSchemaType } from "../types";
 
 export function createServerHelpers<TSchema extends TSchemaType>(
   _schema: TSchema,
@@ -7,6 +7,7 @@ export function createServerHelpers<TSchema extends TSchemaType>(
   return {
     defineOperation: <TInput, TOutput>(
       ...args: Parameters<typeof defineOperation<TInput, TOutput, TSchema>>
+      // @ts-ignore TODO
     ): Operation<TInput, TOutput, TSchema> => {
       return defineOperation<TInput, TOutput, TSchema>(...args);
     },

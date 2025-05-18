@@ -23,7 +23,7 @@ export const addTeam = defineOperation({
 export const getTeamsByTournament = defineOperation({
   name: "getTeamsByTournament",
   input: z.object({ tournamentId: z.string() }),
-  execute: async (ctx, input: typeof schema.teamsTable.$inferInsert) => {
+  execute: async (ctx, input) => {
     return ctx.db.query.teamsTable.findMany({
       where: eq(schema.teamsTable.tournamentId, input.tournamentId),
     });

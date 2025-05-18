@@ -7,7 +7,7 @@ import { WebSocketServer } from "ws"; // would need to add this dependency
 import { db } from "~/db";
 import * as schema from "~/db/schema";
 import * as teamOperations from "../operations/teams";
-import * as teamsUsersOperations from "../operations/teams_users";
+import * as teamsUsersOperations from "../operations/teams-users";
 
 export async function initializeServer() {
   // create server context

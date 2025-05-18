@@ -1,9 +1,9 @@
+import { eq } from "drizzle-orm";
 import { Suspense } from "react";
 import { FullPageLoading } from "~/components/full-page-loading";
-import { db } from "~/db";
-import { eq } from "drizzle-orm";
-import { teamsTable } from "~/db/schema";
 import { TeamCard } from "~/components/team-card";
+import { db } from "~/db";
+import { teamsTable } from "~/db/schema";
 
 interface Props {
   params: Promise<{ tournamentId: string }>;
@@ -33,7 +33,7 @@ async function Suspended({
   return (
     <>
       <div className="flex flex-col gap-y-8 px-16 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {teams.map((team) => (
             <TeamCard
               key={team.id}
