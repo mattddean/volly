@@ -1,25 +1,31 @@
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import type * as schema from "~/db/schema";
+import { PgTable } from "drizzle-orm/pg-core";
 
 /**
  * core type definitions for echo optimistic update system
  */
 
-export interface ClientOperationContext {
-  db: NodePgDatabase<typeof schema>;
+export interface ClientOperationContext<
+  TSchema extends Record<string, PgTable>,
+> {
+  db: NodePgDatabase<TSchema>;
   client: true;
   server: false;
   // can add more context properties later (auth, etc.)
 }
 
-export interface ServerOperationContext {
-  db: NodePgDatabase<typeof schema>;
+export interface ServerOperationContext<
+  TSchema extends Record<string, PgTable>,
+> {
+  db: NodePgDatabase<TSchema>;
   client: false;
   server: true;
   // can add more context properties later (auth, etc.)
 }
 
-export type OperationContext = ClientOperationContext | ServerOperationContext;
+export type OperationContext<TSchema extends Record<string, PgTable>> =
+  | ClientOperationContext<TSchema>
+  | ServerOperationContext<TSchema>;
 
 // database interface that abstracts away the underlying implementation
 // export interface DatabaseInterface {
@@ -47,14 +53,18 @@ export type OperationContext = ClientOperationContext | ServerOperationContext;
 // }
 
 // base operation definition
-export interface Operation<TInput, TOutput> {
+export interface Operation<
+  TInput,
+  TOutput,
+  TSchema extends Record<string, PgTable>,
+> {
   name: string;
   description?: string;
   // schema: any; // can replace with proper schema type later
   input: any; // zod schema or similar
-  execute: (ctx: OperationContext, input: TInput) => Promise<TOutput>;
+  execute: (ctx: OperationContext<TSchema>, input: TInput) => Promise<TOutput>;
   conflictStrategy?: ConflictStrategy;
-  resolveConflict?: ConflictResolver<TInput, TOutput>;
+  resolveConflict?: ConflictResolver<TInput, TOutput, TSchema>;
 }
 
 // conflict handling
@@ -64,8 +74,12 @@ export type ConflictStrategy =
   | "merge"
   | "manual";
 
-export type ConflictResolver<TInput, TOutput> = (
-  ctx: OperationContext,
+export type ConflictResolver<
+  TInput,
+  TOutput,
+  TSchema extends Record<string, PgTable>,
+> = (
+  ctx: OperationContext<TSchema>,
   input: TInput,
   clientChange: TOutput,
   serverState: any,

@@ -1,3 +1,6 @@
+import { eq } from "drizzle-orm";
+import { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { PgTable } from "drizzle-orm/pg-core";
 import { isClient } from "./core";
 import { type OperationContext, ServerOperationContext } from "./types";
 
@@ -9,24 +12,28 @@ if (isClient) {
 /**
  * server context implementation
  */
-export class ServerContext implements ServerOperationContext {
+export class ServerContext<TSchema extends Record<string, PgTable>>
+  implements ServerOperationContext<TSchema>
+{
   public client: false = false;
   public server: true = true;
 
   constructor(
-    private adapter: any,
-    private schema: any,
+    private adapter: NodePgDatabase<TSchema>,
+    private dbSchema: Record<string, PgTable>,
   ) {}
 
   get db() {
-    // create proxy tables to access the server database
-    // implementation would come later
-    return {} as any;
+    return this.adapter;
+  }
+
+  get schema() {
+    return this.dbSchema;
   }
 
   // optional: add transaction support
   async transaction<T>(
-    callback: (txCtx: OperationContext) => Promise<T>,
+    callback: (txCtx: OperationContext<TSchema>) => Promise<T>,
   ): Promise<T> {
     // implementation would depend on the actual database adapter
     // this is just a placeholder
@@ -37,9 +44,9 @@ export class ServerContext implements ServerOperationContext {
 /**
  * register operations on the server
  */
-export function registerOperations(
+export function registerOperations<TSchema extends Record<string, PgTable>>(
   operations: Record<string, any>,
-  context: ServerContext,
+  context: ServerContext<TSchema>,
 ) {
   const registry = new Map<string, any>();
 
@@ -98,7 +105,13 @@ export function registerOperations(
     // get latest state of a record
     getLatest: async (tableName: string, id: string) => {
       // implementation would depend on the database adapter
-      return context.db[tableName].get(id);
+      return (
+        context.db
+          .select()
+          .from(context.schema[tableName])
+          // @ts-expect-error TODO: express via types that id must be a property of every table
+          .where(eq(context.schema[tableName].id, id))
+      );
     },
   };
 }
@@ -140,7 +153,7 @@ export function setupWebSocketServer(
               JSON.stringify({
                 type: "operation_result",
                 id: data.id,
-                error: err.message,
+                error: err instanceof Error ? err.message : "Unknown error",
               }),
             );
           }
@@ -168,7 +181,7 @@ export function setupWebSocketServer(
               JSON.stringify({
                 type: "operation_result",
                 id: data.id,
-                error: err.message,
+                error: err instanceof Error ? err.message : "Unknown error",
               }),
             );
           }
@@ -190,7 +203,7 @@ export function setupWebSocketServer(
               JSON.stringify({
                 type: "operation_result",
                 id: data.id,
-                error: err.message,
+                error: err instanceof Error ? err.message : "Unknown error",
               }),
             );
           }

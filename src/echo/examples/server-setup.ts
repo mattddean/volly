@@ -29,7 +29,7 @@ export async function initializeServer() {
   dbAdapter.connect();
 
   // create server context
-  const serverContext = new ServerContext(dbAdapter, schema);
+  const serverContext = new ServerContext(dbAdapter, schema as any);
 
   // register all operations
   const operationRegistry = registerOperations(

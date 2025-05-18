@@ -1,18 +1,18 @@
-import {
-  type Operation,
-  OperationContext,
-  type ConflictStrategy,
-  OptimisticUpdateConflict,
-} from "./types";
+import { PgTable } from "drizzle-orm/pg-core";
+import { type ConflictStrategy, type Operation } from "./types";
 
 /**
  * define an operation that can be executed on both client and server
  */
-export function defineOperation<TInput, TOutput>(
-  options: Omit<Operation<TInput, TOutput>, "conflictStrategy"> & {
+export function defineOperation<
+  TInput,
+  TOutput,
+  TSchema extends Record<string, PgTable>,
+>(
+  options: Omit<Operation<TInput, TOutput, TSchema>, "conflictStrategy"> & {
     conflictStrategy?: ConflictStrategy;
   },
-): Operation<TInput, TOutput> {
+): Operation<TInput, TOutput, TSchema> {
   return {
     ...options,
     // default to server-wins if not specified
@@ -52,3 +52,17 @@ export function createProxyTables(adapter: any, schema: any): any {
 
 // export a function to check if we're on client or server
 export const isClient = typeof window !== "undefined";
+
+export function createHelpers<TSchema extends Record<string, PgTable>>(
+  _schema: TSchema,
+) {
+  return {
+    defineOperation: <TInput, TOutput>(
+      options: Omit<Operation<TInput, TOutput, TSchema>, "conflictStrategy"> & {
+        conflictStrategy?: ConflictStrategy;
+      },
+    ): Operation<TInput, TOutput, TSchema> => {
+      return defineOperation(options);
+    },
+  };
+}
