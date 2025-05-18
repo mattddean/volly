@@ -1,5 +1,5 @@
-import { type OperationContext, OptimisticUpdateConflict } from "./types";
 import { isClient } from "./core";
+import { type OperationContext, ServerOperationContext } from "./types";
 
 // make sure this file is only used on the server
 if (isClient) {
@@ -9,7 +9,10 @@ if (isClient) {
 /**
  * server context implementation
  */
-export class ServerContext implements OperationContext {
+export class ServerContext implements ServerOperationContext {
+  public client: false = false;
+  public server: true = true;
+
   constructor(
     private adapter: any,
     private schema: any,

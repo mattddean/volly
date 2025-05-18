@@ -1,42 +1,56 @@
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import type * as schema from "~/db/schema";
+
 /**
  * core type definitions for echo optimistic update system
  */
 
-// a simplified context interface that will be available in both client and server
-export interface OperationContext {
-  db: DatabaseInterface;
+export interface ClientOperationContext {
+  db: NodePgDatabase<typeof schema>;
+  client: true;
+  server: false;
   // can add more context properties later (auth, etc.)
 }
 
-// database interface that abstracts away the underlying implementation
-export interface DatabaseInterface {
-  [tableName: string]: TableAdapter;
+export interface ServerOperationContext {
+  db: NodePgDatabase<typeof schema>;
+  client: false;
+  server: true;
+  // can add more context properties later (auth, etc.)
 }
+
+export type OperationContext = ClientOperationContext | ServerOperationContext;
+
+// database interface that abstracts away the underlying implementation
+// export interface DatabaseInterface {
+//   [tableName: string]: TableAdapter;
+// }
 
 // adapter for table operations
-export interface TableAdapter {
-  insert: (data: any) => Promise<any>;
-  update: (id: string, data: any) => Promise<any>;
-  updateWhere: (
-    condition: any,
-    data: any,
-  ) => Promise<{ affectedRows: number; row?: any }>;
-  delete: (id: string) => Promise<void>;
-  where: (filter: any) => QueryBuilder;
-  get: (id: string) => Promise<any>;
-  findMany: (options?: { where?: any; orderBy?: any }) => Promise<any[]>;
-}
+// export interface TableAdapter {
+//   insert: (data: any) => Promise<any>;
+//   update: (id: string, data: any) => Promise<any>;
+//   updateWhere: (
+//     condition: any,
+//     data: any,
+//   ) => Promise<{ affectedRows: number; row?: any }>;
+//   delete: (id: string) => Promise<void>;
+//   where: (filter: any) => QueryBuilder;
+//   get: (id: string) => Promise<any>;
+//   findMany: (options?: { where?: any; orderBy?: any }) => Promise<any[]>;
+// }
 
 // query builder interface
-export interface QueryBuilder {
-  toArray: () => Promise<any[]>;
-  first: () => Promise<any | undefined>;
-}
+// export interface QueryBuilder {
+//   toArray: () => Promise<any[]>;
+//   first: () => Promise<any | undefined>;
+// }
 
 // base operation definition
 export interface Operation<TInput, TOutput> {
   name: string;
-  schema: any; // can replace with proper schema type later
+  description?: string;
+  // schema: any; // can replace with proper schema type later
   input: any; // zod schema or similar
   execute: (ctx: OperationContext, input: TInput) => Promise<TOutput>;
   conflictStrategy?: ConflictStrategy;
