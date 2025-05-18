@@ -19,7 +19,9 @@
       "complexity": "off",
       "performance": "warn",
       "security": "warn",
-      "style": "off",
+      "style": {
+        "useImportType": "warn"
+      },
       "suspicious": "off",
       "nursery": {
         "useSortedClasses": {

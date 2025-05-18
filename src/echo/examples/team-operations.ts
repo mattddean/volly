@@ -8,12 +8,10 @@ import { defineOperation } from "~/lib/echo/server/helpers";
  */
 export const addTeam = defineOperation({
   name: "addTeam",
-  // input validation with zod
   input: z.object({
     name: z.string(),
     tournamentId: z.string(),
   }),
-  // executes on both client and server
   execute: async (ctx, input) => {
     const newTeam = {
       id: crypto.randomUUID(), // generate a unique id
@@ -32,15 +30,12 @@ export const addTeam = defineOperation({
  */
 export const updateTeam = defineOperation({
   name: "updateTeam",
-  // input validation with zod
   input: z.object({
     id: z.string(),
     name: z.string(),
     version: z.number(),
   }),
-  // custom conflict strategy
   conflictStrategy: "merge",
-  // executes on both client and server
   execute: async (ctx, input) => {
     const result = await ctx.db
       .update(teamsTable)
@@ -72,11 +67,9 @@ export const updateTeam = defineOperation({
  */
 export const getTeamsByTournament = defineOperation({
   name: "getTeamsByTournament",
-  // input validation with zod
   input: z.object({
     tournamentId: z.string(),
   }),
-  // executes on both client and server
   execute: async (ctx, input) => {
     return ctx.db.query.teamsTable.findMany({
       where: eq(teamsTable.tournamentId, input.tournamentId),
@@ -90,12 +83,10 @@ export const getTeamsByTournament = defineOperation({
  */
 export const deleteTeam = defineOperation({
   name: "deleteTeam",
-  // input validation with zod
   input: z.object({
     id: z.string(),
-    version: z.number(), // current version for concurrency control
+    version: z.number(),
   }),
-  // executes on both client and server
   execute: async (ctx, input) => {
     const result = await ctx.db
       .update(teamsTable)

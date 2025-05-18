@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { PgTable } from "drizzle-orm/pg-core";
+import type { PgTable } from "drizzle-orm/pg-core";
 import { isClient } from "./core";
-import {
-  type OperationContext,
+import type {
+  OperationContext,
   ServerOperationContext,
   TSchemaType,
 } from "./types";

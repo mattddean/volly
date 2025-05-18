@@ -1,5 +1,6 @@
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { PgTable } from "drizzle-orm/pg-core";
+import type { PgTable } from "drizzle-orm/pg-core";
 
 /**
  * core type definitions for echo optimistic update system
@@ -49,14 +50,21 @@ export type OperationContext<TSchema extends TSchemaType> =
 // }
 
 // base operation definition
-export interface Operation<TInput, TOutput, TSchema extends TSchemaType> {
+export interface Operation<
+  TInputSchema extends StandardSchemaV1,
+  TOutput,
+  TSchema extends TSchemaType,
+> {
   name: string;
   description?: string;
   // schema: any; // can replace with proper schema type later
-  input: any; // zod schema or similar
-  execute: (ctx: OperationContext<TSchema>, input: TInput) => Promise<TOutput>;
+  input: TInputSchema; // zod schema or similar
+  execute: (
+    ctx: OperationContext<TSchema>,
+    input: StandardSchemaV1.InferInput<TInputSchema>,
+  ) => Promise<TOutput>;
   conflictStrategy?: ConflictStrategy;
-  resolveConflict?: ConflictResolver<TInput, TOutput, TSchema>;
+  resolveConflict?: ConflictResolver<TInputSchema, TOutput, TSchema>;
 }
 
 // conflict handling
@@ -66,9 +74,13 @@ export type ConflictStrategy =
   | "merge"
   | "manual";
 
-export type ConflictResolver<TInput, TOutput, TSchema extends TSchemaType> = (
+export type ConflictResolver<
+  TInputSchema extends StandardSchemaV1,
+  TOutput,
+  TSchema extends TSchemaType,
+> = (
   ctx: OperationContext<TSchema>,
-  input: TInput,
+  input: StandardSchemaV1.InferInput<TInputSchema>,
   clientChange: TOutput,
   serverState: any,
 ) => Promise<any>;
