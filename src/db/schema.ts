@@ -1,22 +1,33 @@
 import { relations } from "drizzle-orm";
-import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
+import {
+  bigint,
+  date,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+} from "drizzle-orm/pg-core";
 import { ulid } from "~/lib/ulid";
 
-export const usersTable = sqliteTable("users", {
+export const usersTable = pgTable("users", {
   id: text("id").primaryKey().$defaultFn(ulid),
   name: text("name").notNull(),
   skillGroup: text("skill_group").notNull(),
   zScore: integer("z_score").notNull(),
   sigma: integer("sigma").notNull(),
   /** yyyy-MM-dd */
-  lastPlayedDay: text("last_played_day").notNull(),
+  lastPlayedDay: date("last_played_day").notNull(),
   gamesPlayed: integer("games_played").notNull(),
   wins: integer("wins").notNull(),
   pointsScored: integer("points_scored").notNull(),
   pointsAllowed: integer("points_allowed").notNull(),
+
+  // echo
+  version: bigint("version", { mode: "number" }).notNull().default(0),
 });
 
-export const userChemistriesTable = sqliteTable("user_chemistries", {
+export const userChemistriesTable = pgTable("user_chemistries", {
   id: text("id").primaryKey().$defaultFn(ulid),
   userId: text("user_id")
     .notNull()
@@ -25,15 +36,21 @@ export const userChemistriesTable = sqliteTable("user_chemistries", {
     .notNull()
     .references(() => usersTable.id),
   chemistry: text("chemistry").notNull(),
+
+  // echo
+  version: bigint("version", { mode: "number" }).notNull().default(0),
 });
 
-export const tournamentsTable = sqliteTable("tournaments", {
+export const tournamentsTable = pgTable("tournaments", {
   id: text("id").primaryKey().$defaultFn(ulid),
   name: text("name").notNull(),
-  day: text("day"),
+  day: date("day"),
+
+  // echo
+  version: bigint("version", { mode: "number" }).notNull().default(0),
 });
 
-export const teamsTable = sqliteTable("teams", {
+export const teamsTable = pgTable("teams", {
   id: text("id").primaryKey().$defaultFn(ulid),
   name: text("name").notNull(),
   tournamentId: text("tournament_id")
@@ -42,9 +59,12 @@ export const teamsTable = sqliteTable("teams", {
   avgZScore: integer("avg_z_score"),
   normalizedAvgZScore: integer("normalized_avg_z_score"),
   chemistry: integer("chemistry"),
+
+  // echo
+  version: bigint("version", { mode: "number" }).notNull().default(0),
 });
 
-export const checkinsTable = sqliteTable(
+export const checkinsTable = pgTable(
   "checkins",
   {
     id: text("id").primaryKey().$defaultFn(ulid),
@@ -54,12 +74,15 @@ export const checkinsTable = sqliteTable(
     tournamentId: text("tournament_id")
       .notNull()
       .references(() => tournamentsTable.id),
-    checkedOutAt: text("checked_out_at"),
+    checkedOutAt: timestamp("checked_out_at"),
+
+    // echo
+    version: bigint("version", { mode: "number" }).notNull().default(0),
   },
   (t) => [unique().on(t.tournamentId, t.userId)],
 );
 
-export const teamsUsersTable = sqliteTable(
+export const teamsUsersTable = pgTable(
   "teams_users",
   {
     id: text("id").primaryKey().$defaultFn(ulid),
@@ -74,6 +97,9 @@ export const teamsUsersTable = sqliteTable(
     tournamentId: text("tournament_id")
       .notNull()
       .references(() => tournamentsTable.id),
+
+    // echo
+    version: bigint("version", { mode: "number" }).notNull().default(0),
   },
   (t) => [
     unique().on(t.teamId, t.userId),
@@ -81,7 +107,7 @@ export const teamsUsersTable = sqliteTable(
   ],
 );
 
-export const matchupsTable = sqliteTable("matchups", {
+export const matchupsTable = pgTable("matchups", {
   id: text("id").primaryKey().$defaultFn(ulid),
   team1Id: text("team1_id")
     .notNull()
@@ -97,9 +123,12 @@ export const matchupsTable = sqliteTable("matchups", {
     .notNull()
     .references(() => tournamentsTable.id),
   roundNumber: integer("round_number").notNull(),
+
+  // echo
+  version: bigint("version", { mode: "number" }).notNull().default(0),
 });
 
-export const gamesTable = sqliteTable("games", {
+export const gamesTable = pgTable("games", {
   id: text("id").primaryKey().$defaultFn(ulid),
   matchupId: text("matchup_id")
     .notNull()
@@ -112,10 +141,13 @@ export const gamesTable = sqliteTable("games", {
     .references(() => teamsTable.id),
   team1Score: integer("team1_score").notNull(),
   team2Score: integer("team2_score").notNull(),
-  day: text("day").notNull(),
+  day: date("day").notNull(),
   tournamentId: text("tournament_id")
     .notNull()
     .references(() => tournamentsTable.id),
+
+  // echo
+  version: bigint("version", { mode: "number" }).notNull().default(0),
 });
 
 export const gamesRelations = relations(gamesTable, ({ one }) => ({
