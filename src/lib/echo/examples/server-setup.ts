@@ -1,10 +1,10 @@
+import { WebSocketServer } from "ws"; // would need to add this dependency
 import {
-  ServerContext,
   registerOperations,
+  ServerContext,
   setupWebSocketServer,
 } from "../server";
 import * as teamOperations from "./team-operations";
-import { WebSocketServer } from "ws"; // would need to add this dependency
 
 // database adapter for PostgreSQL (could also be SQLite, MySQL, etc.)
 // this is a placeholder - in a real app this would connect to your database
