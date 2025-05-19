@@ -1,4 +1,6 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import type { PgTable } from "drizzle-orm/pg-core";
 import { isClient } from "../core";
 import {
   type ClientOperationContext,
@@ -22,21 +24,22 @@ export class ClientContext<TSchema extends TSchemaType>
   public server: false = false;
 
   constructor(
-    private adapter: any,
-    private schema: any,
+    public adapter: NodePgDatabase<TSchema>,
+    public dbSchema: Record<string, PgTable>,
   ) {}
 
   get db() {
-    // create proxy tables to access the client database
-    // implementation would come later
-    return {} as any;
+    return this.adapter;
   }
 }
 
 /**
  * setup sync between client and server
  */
-export function setupSync(wsUrl: string) {
+export function setupSync<TSchema extends TSchemaType>(
+  wsUrl: string,
+  clientCtx: ClientContext<TSchema>,
+) {
   // create websocket connection
   const ws = new WebSocket(wsUrl);
   const pendingOperations = new Map<
@@ -48,12 +51,14 @@ export function setupSync(wsUrl: string) {
   >();
 
   // handle messages from server
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+  ws.onmessage = async (event) => {
+    const data = JSON.parse(event.data as string);
 
     if (data.type === "db_change") {
       // apply remote changes to local database
-      applyRemoteChange(data.change);
+      // the change object should conform to { table: string; id: string; data: any }
+      // where 'data' is the complete new state of the record.
+      await applyRemoteChange(data.change);
     }
 
     if (data.type === "operation_result") {
@@ -73,9 +78,56 @@ export function setupSync(wsUrl: string) {
   };
 
   // apply changes from server to local database
-  function applyRemoteChange(change: any) {
-    // implementation would come later
-    console.log("Applying remote change:", change);
+  async function applyRemoteChange(change: {
+    table: string;
+    // id: string; // id is expected to be part of change.data for upsert using id column
+    data: any;
+  }) {
+    if (!change || !change.table || !change.data || !change.data.id) {
+      console.error("invalid change object received from server:", change);
+      return;
+    }
+
+    const tableSchema = clientCtx.dbSchema[change.table];
+    if (!tableSchema) {
+      console.error(
+        `table schema not found for table '${change.table}' in clientCtx.dbSchema. available tables:`,
+        Object.keys(clientCtx.dbSchema),
+      );
+      return;
+    }
+
+    // assume the table has an 'id' column for conflict target
+    // and that change.data contains the full record including the 'id'
+    const idColumn = (tableSchema as any).id;
+    if (!idColumn) {
+      console.error(
+        `table '${change.table}' does not have an 'id' column defined in its schema for upserting.`,
+      );
+      return;
+    }
+
+    try {
+      console.log(
+        `applying remote change to table '${change.table}', id '${change.data.id}':`,
+        change.data,
+      );
+      await clientCtx.adapter
+        .insert(tableSchema)
+        .values(change.data)
+        .onConflictDoUpdate({
+          target: idColumn, // use the 'id' column for conflict detection
+          set: change.data, // set the entire record
+        });
+      console.log(
+        `successfully applied remote change to table '${change.table}', id '${change.data.id}'`,
+      );
+    } catch (err) {
+      console.error(
+        `error applying remote change to table '${change.table}', id '${change.data.id}':`,
+        err,
+      );
+    }
   }
 
   // generate unique id for operations
