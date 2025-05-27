@@ -194,6 +194,163 @@ export class VolleyballMatchmaker {
 		}));
 	}
 
+	// create optimal teams and matchups simultaneously using global optimization
+	createOptimalTeamsAndMatchups(
+		teamSize = 6,
+		numTeams: number | null = null,
+		maxIterations = 1000,
+		useEnhancedEvaluation = true,
+	): { teams: TeamInfo[]; matchups: MatchupInfo[] } {
+		const availablePlayers = [...this.attendingPlayers];
+		const totalPlayers = availablePlayers.length;
+
+		if (numTeams === null) {
+			numTeams = Math.ceil(totalPlayers / teamSize);
+		}
+
+		if (numTeams < 2) {
+			console.log("need at least 2 teams");
+			return { teams: [], matchups: [] };
+		}
+
+		console.log(`optimizing ${numTeams} teams for best possible matchups...`);
+
+		// start with a reasonable initial solution (current snake draft approach)
+		let bestTeams = this.createMultipleTeams(teamSize, numTeams);
+		let bestScore = useEnhancedEvaluation
+			? this.evaluateTeamConfigurationEnhanced(bestTeams)
+			: this.evaluateTeamConfiguration(bestTeams);
+
+		// simulated annealing parameters
+		let temperature = 100;
+		const coolingRate = 0.995;
+		const minTemperature = 0.1;
+
+		for (
+			let iteration = 0;
+			iteration < maxIterations && temperature > minTemperature;
+			iteration++
+		) {
+			// create a neighbor solution by swapping players between teams
+			const candidateTeams = this.createNeighborSolution(bestTeams);
+			const candidateScore = useEnhancedEvaluation
+				? this.evaluateTeamConfigurationEnhanced(candidateTeams)
+				: this.evaluateTeamConfiguration(candidateTeams);
+
+			// accept better solutions, or worse solutions with probability based on temperature
+			const scoreDelta = candidateScore - bestScore;
+			const acceptanceProbability =
+				scoreDelta > 0 ? 1 : Math.exp(scoreDelta / temperature);
+
+			if (Math.random() < acceptanceProbability) {
+				bestTeams = candidateTeams;
+				bestScore = candidateScore;
+			}
+
+			temperature *= coolingRate;
+
+			// log progress occasionally
+			if (iteration % 100 === 0) {
+				console.log(
+					`iteration ${iteration}: score ${bestScore.toFixed(2)}, temp ${temperature.toFixed(2)}`,
+				);
+			}
+		}
+
+		const matchups = this.createOptimalMatchups(bestTeams);
+
+		console.log(`optimization complete: final score ${bestScore.toFixed(2)}`);
+		return { teams: bestTeams, matchups };
+	}
+
+	// enhanced evaluation that considers multiple factors
+	private evaluateTeamConfigurationEnhanced(teams: TeamInfo[]): number {
+		if (teams.length < 2) return 0;
+
+		let totalMatchupQuality = 0;
+		let matchupCount = 0;
+
+		// factor 1: average matchup quality
+		for (let i = 0; i < teams.length; i++) {
+			for (let j = i + 1; j < teams.length; j++) {
+				const quality = this.predictMatchQuality(
+					teams[i].players,
+					teams[j].players,
+				);
+				totalMatchupQuality += quality;
+				matchupCount++;
+			}
+		}
+		const avgMatchupQuality =
+			matchupCount > 0 ? totalMatchupQuality / matchupCount : 0;
+
+		// factor 2: team size balance (penalize uneven team sizes)
+		const teamSizes = teams.map((t) => t.players.length);
+		const avgTeamSize = average(teamSizes);
+		const teamSizeVariance = average(
+			teamSizes.map((size) => Math.pow(size - avgTeamSize, 2)),
+		);
+		const teamSizeBalance = Math.max(0, 100 - teamSizeVariance * 10); // penalty for size imbalance
+
+		// factor 3: overall MMR distribution (prefer teams with similar average MMRs)
+		const teamMMRs = teams.map((t) => t.avgMMR);
+		const mmrRange = Math.max(...teamMMRs) - Math.min(...teamMMRs);
+		const mmrBalance = Math.max(0, 100 - mmrRange / 2); // penalty for large MMR spread
+
+		// weighted combination of factors
+		const qualityWeight = 0.7;
+		const sizeWeight = 0.15;
+		const mmrWeight = 0.15;
+
+		return (
+			avgMatchupQuality * qualityWeight +
+			teamSizeBalance * sizeWeight +
+			mmrBalance * mmrWeight
+		);
+	}
+
+	// create a neighbor solution by swapping players between teams
+	private createNeighborSolution(teams: TeamInfo[]): TeamInfo[] {
+		const newTeams = teams.map((team) => ({
+			...team,
+			players: [...team.players],
+		}));
+
+		// randomly select two different teams
+		const team1Index = Math.floor(Math.random() * newTeams.length);
+		let team2Index = Math.floor(Math.random() * newTeams.length);
+		while (team2Index === team1Index && newTeams.length > 1) {
+			team2Index = Math.floor(Math.random() * newTeams.length);
+		}
+
+		const team1 = newTeams[team1Index];
+		const team2 = newTeams[team2Index];
+
+		// ensure both teams have players to swap
+		if (team1.players.length === 0 || team2.players.length === 0) {
+			return newTeams;
+		}
+
+		// randomly select players to swap
+		const player1Index = Math.floor(Math.random() * team1.players.length);
+		const player2Index = Math.floor(Math.random() * team2.players.length);
+
+		// swap the players
+		const player1 = team1.players[player1Index];
+		const player2 = team2.players[player2Index];
+
+		team1.players[player1Index] = player2;
+		team2.players[player2Index] = player1;
+
+		// recalculate team stats
+		team1.avgMMR = average(team1.players.map((p) => p.mmr));
+		team1.avgSigma = average(team1.players.map((p) => p.sigma));
+		team2.avgMMR = average(team2.players.map((p) => p.mmr));
+		team2.avgSigma = average(team2.players.map((p) => p.sigma));
+
+		return newTeams;
+	}
+
 	// record game result and update MMRs using ML model
 	async recordGameResult(
 		team1: Player[],
@@ -411,5 +568,28 @@ export class VolleyballMatchmaker {
 
 	async loadModel(path: string): Promise<void> {
 		await this.mmrModel.loadModel(path);
+	}
+
+	// simple evaluation based only on matchup quality
+	private evaluateTeamConfiguration(teams: TeamInfo[]): number {
+		if (teams.length < 2) return 0;
+
+		let totalQuality = 0;
+		let matchupCount = 0;
+
+		// evaluate all possible matchups
+		for (let i = 0; i < teams.length; i++) {
+			for (let j = i + 1; j < teams.length; j++) {
+				const quality = this.predictMatchQuality(
+					teams[i].players,
+					teams[j].players,
+				);
+				totalQuality += quality;
+				matchupCount++;
+			}
+		}
+
+		// return average quality across all possible matchups
+		return matchupCount > 0 ? totalQuality / matchupCount : 0;
 	}
 }
