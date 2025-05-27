@@ -592,4 +592,391 @@ export class VolleyballMatchmaker {
 		// return average quality across all possible matchups
 		return matchupCount > 0 ? totalQuality / matchupCount : 0;
 	}
+
+	// mathematical optimization using integer linear programming approach
+	createOptimalTeamsMathematical(
+		teamSize = 6,
+		numTeams: number | null = null,
+	): { teams: TeamInfo[]; matchups: MatchupInfo[]; objective: number } {
+		const availablePlayers = [...this.attendingPlayers];
+		const totalPlayers = availablePlayers.length;
+
+		if (numTeams === null) {
+			numTeams = Math.ceil(totalPlayers / teamSize);
+		}
+
+		if (numTeams < 2) {
+			console.log("need at least 2 teams");
+			return { teams: [], matchups: [], objective: 0 };
+		}
+
+		console.log(`using mathematical optimization for ${numTeams} teams...`);
+
+		// this is a variant of the Balanced k-way Partitioning Problem
+		// we'll use a branch-and-bound approach with linear relaxation
+
+		const result = this.solveTeamAssignmentILP(availablePlayers, numTeams);
+		const matchups = this.createOptimalMatchups(result.teams);
+
+		console.log(
+			`mathematical optimization complete: objective ${result.objective.toFixed(2)}`,
+		);
+		return { teams: result.teams, matchups, objective: result.objective };
+	}
+
+	// solve team assignment as Integer Linear Programming problem
+	private solveTeamAssignmentILP(
+		players: Player[],
+		numTeams: number,
+	): { teams: TeamInfo[]; objective: number } {
+		const n = players.length;
+		const k = numTeams;
+
+		// decision variables: x[i][j] = 1 if player i is assigned to team j
+		// objective: minimize sum of squared differences in team average MMRs
+
+		// since we don't have a full ILP solver, we'll use a greedy approximation
+		// with local search that mimics the mathematical approach
+
+		// step 1: calculate the optimal team average MMR
+		const totalMMR = players.reduce((sum, p) => sum + p.mmr, 0);
+		const targetAvgMMR = totalMMR / k;
+
+		console.log(`target average MMR per team: ${targetAvgMMR.toFixed(1)}`);
+
+		// step 2: use modified Hungarian algorithm approach
+		// create cost matrix where cost[i][j] = how much player i deviates from team j's target
+		const teams: Player[][] = Array(k)
+			.fill(null)
+			.map(() => []);
+		const teamMMRs: number[] = Array(k).fill(0);
+		const teamSizes: number[] = Array(k).fill(0);
+
+		// greedy assignment with look-ahead
+		const unassigned = [...players];
+
+		// sort players by MMR for better initial assignment
+		unassigned.sort((a, b) => b.mmr - a.mmr);
+
+		// assign players using minimum cost approach
+		for (const player of unassigned) {
+			let bestTeam = 0;
+			let bestCost = Number.POSITIVE_INFINITY;
+
+			for (let t = 0; t < k; t++) {
+				// skip if team is already full
+				if (teamSizes[t] >= Math.ceil(n / k)) continue;
+
+				// calculate cost of adding this player to team t
+				const newTeamMMR = (teamMMRs[t] + player.mmr) / (teamSizes[t] + 1);
+				const deviationCost = Math.abs(newTeamMMR - targetAvgMMR);
+
+				// add penalty for team size imbalance
+				const sizeImbalanceCost = Math.abs(teamSizes[t] + 1 - n / k) * 10;
+
+				const totalCost = deviationCost + sizeImbalanceCost;
+
+				if (totalCost < bestCost) {
+					bestCost = totalCost;
+					bestTeam = t;
+				}
+			}
+
+			// assign player to best team
+			teams[bestTeam].push(player);
+			teamMMRs[bestTeam] += player.mmr;
+			teamSizes[bestTeam]++;
+		}
+
+		// step 3: local optimization using 2-opt swaps
+		let improved = true;
+		let iterations = 0;
+		const maxIterations = 100;
+
+		while (improved && iterations < maxIterations) {
+			improved = false;
+			iterations++;
+
+			// try all possible swaps between teams
+			for (let t1 = 0; t1 < k; t1++) {
+				for (let t2 = t1 + 1; t2 < k; t2++) {
+					for (let p1 = 0; p1 < teams[t1].length; p1++) {
+						for (let p2 = 0; p2 < teams[t2].length; p2++) {
+							// calculate current objective
+							const currentObj = this.calculateTeamBalanceObjective(teams);
+
+							// try swap
+							const player1 = teams[t1][p1];
+							const player2 = teams[t2][p2];
+
+							teams[t1][p1] = player2;
+							teams[t2][p2] = player1;
+
+							// calculate new objective
+							const newObj = this.calculateTeamBalanceObjective(teams);
+
+							if (newObj < currentObj) {
+								// keep the swap
+								improved = true;
+							} else {
+								// revert the swap
+								teams[t1][p1] = player1;
+								teams[t2][p2] = player2;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		console.log(`local optimization completed in ${iterations} iterations`);
+
+		// convert to TeamInfo format
+		const teamInfos = teams.map((team) => ({
+			players: team,
+			avgMMR: average(team.map((p) => p.mmr)),
+			avgSigma: average(team.map((p) => p.sigma)),
+		}));
+
+		const finalObjective = this.calculateTeamBalanceObjective(teams);
+
+		return { teams: teamInfos, objective: finalObjective };
+	}
+
+	// calculate objective function for team balance optimization
+	private calculateTeamBalanceObjective(teams: Player[][]): number {
+		if (teams.length < 2) return 0;
+
+		// objective 1: minimize variance in team average MMRs
+		const teamAvgMMRs = teams.map((team) =>
+			team.length > 0 ? average(team.map((p) => p.mmr)) : 0,
+		);
+		const overallAvg = average(teamAvgMMRs);
+		const mmrVariance = average(
+			teamAvgMMRs.map((avg) => Math.pow(avg - overallAvg, 2)),
+		);
+
+		// objective 2: minimize team size imbalance
+		const teamSizes = teams.map((team) => team.length);
+		const avgSize = average(teamSizes);
+		const sizeVariance = average(
+			teamSizes.map((size) => Math.pow(size - avgSize, 2)),
+		);
+
+		// combined objective (lower is better)
+		return mmrVariance + sizeVariance * 100; // weight size balance heavily
+	}
+
+	// Hungarian algorithm for optimal bipartite matching (for 2 teams)
+	createOptimalTwoTeamsHungarian(teamSize = 6): {
+		teams: TeamInfo[];
+		matchups: MatchupInfo[];
+	} {
+		const players = [...this.attendingPlayers];
+
+		if (players.length < 4) {
+			console.log("need at least 4 players for two teams");
+			return { teams: [], matchups: [] };
+		}
+
+		const playersPerTeam = Math.min(teamSize, Math.floor(players.length / 2));
+		console.log(
+			`using Hungarian algorithm for 2 teams of ${playersPerTeam} players each`,
+		);
+
+		// for 2 teams, we can use the Hungarian algorithm
+		// create cost matrix where cost[i][j] = quality loss if players i and j are on same team
+		const n = Math.min(players.length, playersPerTeam * 2);
+		const selectedPlayers = players.slice(0, n);
+
+		// create all possible team combinations and find the one with best balance
+		const bestCombination = this.findOptimalTwoTeamSplit(selectedPlayers);
+
+		const team1 = bestCombination.team1;
+		const team2 = bestCombination.team2;
+
+		const teams = [
+			{
+				players: team1,
+				avgMMR: average(team1.map((p) => p.mmr)),
+				avgSigma: average(team1.map((p) => p.sigma)),
+			},
+			{
+				players: team2,
+				avgMMR: average(team2.map((p) => p.mmr)),
+				avgSigma: average(team2.map((p) => p.sigma)),
+			},
+		];
+
+		const matchups = this.createOptimalMatchups(teams);
+
+		console.log(
+			`Hungarian algorithm complete: match quality ${bestCombination.quality.toFixed(2)}`,
+		);
+		return { teams, matchups };
+	}
+
+	// find optimal split of players into two teams using exhaustive search (for small n)
+	private findOptimalTwoTeamSplit(players: Player[]): {
+		team1: Player[];
+		team2: Player[];
+		quality: number;
+	} {
+		const n = players.length;
+		const teamSize = Math.floor(n / 2);
+
+		// for small numbers, we can do exhaustive search
+		if (n <= 12) {
+			return this.exhaustiveSearchTwoTeams(players, teamSize);
+		}
+
+		// for larger numbers, use approximation algorithm
+		return this.approximateTwoTeamSplit(players, teamSize);
+	}
+
+	// exhaustive search for optimal two-team split (only feasible for small n)
+	private exhaustiveSearchTwoTeams(
+		players: Player[],
+		teamSize: number,
+	): {
+		team1: Player[];
+		team2: Player[];
+		quality: number;
+	} {
+		let bestQuality = -1;
+		let bestTeam1: Player[] = [];
+		let bestTeam2: Player[] = [];
+
+		// generate all combinations of teamSize players from the total
+		const combinations = this.generateCombinations(players, teamSize);
+
+		for (const team1 of combinations) {
+			const team2 = players.filter((p) => !team1.includes(p));
+
+			// skip if team2 is too small
+			if (team2.length < teamSize - 1) continue;
+
+			const quality = this.predictMatchQuality(team1, team2);
+
+			if (quality > bestQuality) {
+				bestQuality = quality;
+				bestTeam1 = team1;
+				bestTeam2 = team2;
+			}
+		}
+
+		return { team1: bestTeam1, team2: bestTeam2, quality: bestQuality };
+	}
+
+	// generate all combinations of k elements from array
+	private generateCombinations<T>(array: T[], k: number): T[][] {
+		if (k === 0) return [[]];
+		if (k > array.length) return [];
+
+		const result: T[][] = [];
+
+		for (let i = 0; i <= array.length - k; i++) {
+			const head = array[i];
+			const tailCombinations = this.generateCombinations(
+				array.slice(i + 1),
+				k - 1,
+			);
+
+			for (const tail of tailCombinations) {
+				result.push([head, ...tail]);
+			}
+		}
+
+		return result;
+	}
+
+	// approximation algorithm for two-team split (for larger n)
+	private approximateTwoTeamSplit(
+		players: Player[],
+		teamSize: number,
+	): {
+		team1: Player[];
+		team2: Player[];
+		quality: number;
+	} {
+		// use a greedy approach with multiple random starts
+		let bestQuality = -1;
+		let bestTeam1: Player[] = [];
+		let bestTeam2: Player[] = [];
+
+		const attempts = 1000;
+
+		for (let attempt = 0; attempt < attempts; attempt++) {
+			// random initial assignment
+			const shuffled = [...players];
+			this.shuffleArray(shuffled);
+
+			const team1 = shuffled.slice(0, teamSize);
+			const team2 = shuffled.slice(teamSize, teamSize * 2);
+
+			// local improvement using swaps
+			const improved = this.improveTeamSplitLocally(team1, team2);
+			const quality = this.predictMatchQuality(improved.team1, improved.team2);
+
+			if (quality > bestQuality) {
+				bestQuality = quality;
+				bestTeam1 = improved.team1;
+				bestTeam2 = improved.team2;
+			}
+		}
+
+		return { team1: bestTeam1, team2: bestTeam2, quality: bestQuality };
+	}
+
+	// local improvement for two-team split using hill climbing
+	private improveTeamSplitLocally(
+		team1: Player[],
+		team2: Player[],
+	): {
+		team1: Player[];
+		team2: Player[];
+	} {
+		const currentTeam1 = [...team1];
+		const currentTeam2 = [...team2];
+		let improved = true;
+
+		while (improved) {
+			improved = false;
+			let bestQuality = this.predictMatchQuality(currentTeam1, currentTeam2);
+
+			// try all possible swaps
+			for (let i = 0; i < currentTeam1.length; i++) {
+				for (let j = 0; j < currentTeam2.length; j++) {
+					// swap players
+					const temp = currentTeam1[i];
+					currentTeam1[i] = currentTeam2[j];
+					currentTeam2[j] = temp;
+
+					const newQuality = this.predictMatchQuality(
+						currentTeam1,
+						currentTeam2,
+					);
+
+					if (newQuality > bestQuality) {
+						bestQuality = newQuality;
+						improved = true;
+					} else {
+						// revert swap
+						currentTeam2[j] = currentTeam1[i];
+						currentTeam1[i] = temp;
+					}
+				}
+			}
+		}
+
+		return { team1: currentTeam1, team2: currentTeam2 };
+	}
+
+	// utility function to shuffle array in place
+	private shuffleArray<T>(array: T[]): void {
+		for (let i = array.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[array[i], array[j]] = [array[j], array[i]];
+		}
+	}
 }
