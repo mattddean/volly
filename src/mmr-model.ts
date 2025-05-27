@@ -265,7 +265,7 @@ export class MMRModel {
 			this.model = await tf.loadLayersModel(`file://${path}`);
 			console.log("model loaded successfully");
 		} catch (error) {
-			console.log("failed to load model, using new model");
+			console.log("failed to load model, using new model", error);
 			this.initializeModel();
 		}
 	}

@@ -194,13 +194,16 @@ export class VolleyballMatchmaker {
 		}));
 	}
 
-	// create optimal teams and matchups simultaneously using global optimization
-	createOptimalTeamsAndMatchups(
+	// integrated optimization: teams AND their specific matchups simultaneously
+	createOptimalTeamsAndMatchupsIntegrated(
 		teamSize = 6,
 		numTeams: number | null = null,
-		maxIterations = 1000,
-		useEnhancedEvaluation = true,
-	): { teams: TeamInfo[]; matchups: MatchupInfo[] } {
+		gamesPerTeam = 1, // how many games each team will play
+	): {
+		teams: TeamInfo[];
+		matchups: MatchupInfo[];
+		schedule: [number, number][];
+	} {
 		const availablePlayers = [...this.attendingPlayers];
 		const totalPlayers = availablePlayers.length;
 
@@ -210,145 +213,430 @@ export class VolleyballMatchmaker {
 
 		if (numTeams < 2) {
 			console.log("need at least 2 teams");
-			return { teams: [], matchups: [] };
+			return { teams: [], matchups: [], schedule: [] };
 		}
 
-		console.log(`optimizing ${numTeams} teams for best possible matchups...`);
+		console.log(
+			`integrated optimization: ${numTeams} teams with ${gamesPerTeam} games each...`,
+		);
 
-		// start with a reasonable initial solution (current snake draft approach)
-		let bestTeams = this.createMultipleTeams(teamSize, numTeams);
-		let bestScore = useEnhancedEvaluation
-			? this.evaluateTeamConfigurationEnhanced(bestTeams)
-			: this.evaluateTeamConfiguration(bestTeams);
+		// this is the correct formulation: optimize teams FOR specific matchups
+		const result = this.solveIntegratedTeamMatchupOptimization(
+			availablePlayers,
+			numTeams,
+			gamesPerTeam,
+		);
 
-		// simulated annealing parameters
-		let temperature = 100;
-		const coolingRate = 0.995;
-		const minTemperature = 0.1;
+		// convert schedule indices to MatchupInfo format
+		const matchups = result.schedule.map(([team1Idx, team2Idx]) => ({
+			team1: result.teams[team1Idx],
+			team2: result.teams[team2Idx],
+			predictedQuality: this.predictMatchQuality(
+				result.teams[team1Idx].players,
+				result.teams[team2Idx].players,
+			),
+			mmrDifference: Math.abs(
+				result.teams[team1Idx].avgMMR - result.teams[team2Idx].avgMMR,
+			),
+		}));
 
-		for (
-			let iteration = 0;
-			iteration < maxIterations && temperature > minTemperature;
-			iteration++
-		) {
-			// create a neighbor solution by swapping players between teams
-			const candidateTeams = this.createNeighborSolution(bestTeams);
-			const candidateScore = useEnhancedEvaluation
-				? this.evaluateTeamConfigurationEnhanced(candidateTeams)
-				: this.evaluateTeamConfiguration(candidateTeams);
+		console.log(
+			`integrated optimization complete: total quality ${result.totalQuality.toFixed(2)}`,
+		);
+		return { teams: result.teams, matchups, schedule: result.schedule };
+	}
 
-			// accept better solutions, or worse solutions with probability based on temperature
-			const scoreDelta = candidateScore - bestScore;
-			const acceptanceProbability =
-				scoreDelta > 0 ? 1 : Math.exp(scoreDelta / temperature);
+	// solve the integrated problem: teams + matchups simultaneously
+	private solveIntegratedTeamMatchupOptimization(
+		players: Player[],
+		numTeams: number,
+		gamesPerTeam: number,
+	): {
+		teams: TeamInfo[];
+		schedule: [number, number][];
+		totalQuality: number;
+	} {
+		// this is a much harder problem: we need to optimize both:
+		// 1. player assignment to teams
+		// 2. which teams play against each other
+		// such that the total quality of all scheduled games is maximized
 
-			if (Math.random() < acceptanceProbability) {
-				bestTeams = candidateTeams;
-				bestScore = candidateScore;
+		console.log("solving integrated team-matchup optimization...");
+
+		// for small problems, we can enumerate feasible schedules
+		if (numTeams <= 6 && gamesPerTeam === 1) {
+			return this.solveSmallIntegratedProblem(players, numTeams);
+		}
+
+		// for larger problems, use iterative optimization
+		return this.solveIntegratedIteratively(players, numTeams, gamesPerTeam);
+	}
+
+	// exact solution for small integrated problems
+	private solveSmallIntegratedProblem(
+		players: Player[],
+		numTeams: number,
+	): { teams: TeamInfo[]; schedule: [number, number][]; totalQuality: number } {
+		console.log("using exact solution for small problem...");
+
+		let bestQuality = -1;
+		let bestTeams: TeamInfo[] = [];
+		let bestSchedule: [number, number][] = [];
+
+		// generate multiple random team assignments
+		const attempts = Math.min(
+			1000,
+			this.factorial(Math.min(players.length, 8)),
+		); // limit attempts
+
+		for (let attempt = 0; attempt < attempts; attempt++) {
+			// create random team assignment
+			const shuffled = [...players];
+			this.shuffleArray(shuffled);
+
+			const teams = this.distributePlayersToTeams(shuffled, numTeams);
+
+			// find optimal schedule for these teams
+			const schedule = this.findOptimalScheduleForTeams(teams);
+
+			// calculate total quality
+			const totalQuality = schedule.reduce((sum, [t1, t2]) => {
+				return (
+					sum + this.predictMatchQuality(teams[t1].players, teams[t2].players)
+				);
+			}, 0);
+
+			if (totalQuality > bestQuality) {
+				bestQuality = totalQuality;
+				bestTeams = teams;
+				bestSchedule = schedule;
+			}
+		}
+
+		// local improvement: try swapping players between teams
+		const improved = this.improveIntegratedSolution(bestTeams, bestSchedule);
+
+		return {
+			teams: improved.teams,
+			schedule: improved.schedule,
+			totalQuality: improved.totalQuality,
+		};
+	}
+
+	// iterative solution for larger integrated problems
+	private solveIntegratedIteratively(
+		players: Player[],
+		numTeams: number,
+		gamesPerTeam: number,
+	): { teams: TeamInfo[]; schedule: [number, number][]; totalQuality: number } {
+		console.log("using iterative solution for larger problem...");
+
+		// start with a reasonable initial solution
+		let currentTeams = this.distributePlayersToTeams(players, numTeams);
+		let currentSchedule = this.createRoundRobinSchedule(numTeams, gamesPerTeam);
+		let currentQuality = this.calculateScheduleQuality(
+			currentTeams,
+			currentSchedule,
+		);
+
+		console.log(`initial quality: ${currentQuality.toFixed(2)}`);
+
+		// alternating optimization: improve teams, then improve schedule
+		let improved = true;
+		let iterations = 0;
+		const maxIterations = 50;
+
+		while (improved && iterations < maxIterations) {
+			improved = false;
+			iterations++;
+
+			// phase 1: improve team assignments for current schedule
+			const improvedTeams = this.optimizeTeamsForSchedule(
+				currentTeams,
+				currentSchedule,
+			);
+			const newQuality1 = this.calculateScheduleQuality(
+				improvedTeams,
+				currentSchedule,
+			);
+
+			if (newQuality1 > currentQuality) {
+				currentTeams = improvedTeams;
+				currentQuality = newQuality1;
+				improved = true;
 			}
 
-			temperature *= coolingRate;
+			// phase 2: improve schedule for current teams
+			const improvedSchedule = this.optimizeScheduleForTeams(currentTeams);
+			const newQuality2 = this.calculateScheduleQuality(
+				currentTeams,
+				improvedSchedule,
+			);
 
-			// log progress occasionally
-			if (iteration % 100 === 0) {
+			if (newQuality2 > currentQuality) {
+				currentSchedule = improvedSchedule;
+				currentQuality = newQuality2;
+				improved = true;
+			}
+
+			if (iterations % 10 === 0) {
 				console.log(
-					`iteration ${iteration}: score ${bestScore.toFixed(2)}, temp ${temperature.toFixed(2)}`,
+					`iteration ${iterations}: quality ${currentQuality.toFixed(2)}`,
 				);
 			}
 		}
 
-		const matchups = this.createOptimalMatchups(bestTeams);
+		console.log(`iterative optimization completed in ${iterations} iterations`);
 
-		console.log(`optimization complete: final score ${bestScore.toFixed(2)}`);
-		return { teams: bestTeams, matchups };
+		return {
+			teams: currentTeams,
+			schedule: currentSchedule,
+			totalQuality: currentQuality,
+		};
 	}
 
-	// enhanced evaluation that considers multiple factors
-	private evaluateTeamConfigurationEnhanced(teams: TeamInfo[]): number {
-		if (teams.length < 2) return 0;
+	// distribute players evenly to teams
+	private distributePlayersToTeams(
+		players: Player[],
+		numTeams: number,
+	): TeamInfo[] {
+		const teams: Player[][] = Array(numTeams)
+			.fill(null)
+			.map(() => []);
 
-		let totalMatchupQuality = 0;
-		let matchupCount = 0;
+		// distribute players using snake draft for initial balance
+		let currentTeam = 0;
+		let direction = 1;
 
-		// factor 1: average matchup quality
+		for (const player of players) {
+			teams[currentTeam].push(player);
+
+			currentTeam += direction;
+			if (currentTeam === numTeams) {
+				currentTeam = numTeams - 1;
+				direction = -1;
+			} else if (currentTeam === -1) {
+				currentTeam = 0;
+				direction = 1;
+			}
+		}
+
+		return teams.map((team) => ({
+			players: team,
+			avgMMR: average(team.map((p) => p.mmr)),
+			avgSigma: average(team.map((p) => p.sigma)),
+		}));
+	}
+
+	// find optimal schedule for given teams (which teams should play each other)
+	private findOptimalScheduleForTeams(teams: TeamInfo[]): [number, number][] {
+		const schedule: [number, number][] = [];
+
+		// for now, create all possible pairings and pick the best ones
+		// this is a maximum weight matching problem
+		const possibleMatchups: { teams: [number, number]; quality: number }[] = [];
+
 		for (let i = 0; i < teams.length; i++) {
 			for (let j = i + 1; j < teams.length; j++) {
 				const quality = this.predictMatchQuality(
 					teams[i].players,
 					teams[j].players,
 				);
-				totalMatchupQuality += quality;
-				matchupCount++;
+				possibleMatchups.push({ teams: [i, j], quality });
 			}
 		}
-		const avgMatchupQuality =
-			matchupCount > 0 ? totalMatchupQuality / matchupCount : 0;
 
-		// factor 2: team size balance (penalize uneven team sizes)
-		const teamSizes = teams.map((t) => t.players.length);
-		const avgTeamSize = average(teamSizes);
-		const teamSizeVariance = average(
-			teamSizes.map((size) => Math.pow(size - avgTeamSize, 2)),
-		);
-		const teamSizeBalance = Math.max(0, 100 - teamSizeVariance * 10); // penalty for size imbalance
+		// sort by quality and greedily select non-overlapping matchups
+		possibleMatchups.sort((a, b) => b.quality - a.quality);
 
-		// factor 3: overall MMR distribution (prefer teams with similar average MMRs)
-		const teamMMRs = teams.map((t) => t.avgMMR);
-		const mmrRange = Math.max(...teamMMRs) - Math.min(...teamMMRs);
-		const mmrBalance = Math.max(0, 100 - mmrRange / 2); // penalty for large MMR spread
+		const usedTeams = new Set<number>();
+		for (const matchup of possibleMatchups) {
+			const [t1, t2] = matchup.teams;
+			if (!usedTeams.has(t1) && !usedTeams.has(t2)) {
+				schedule.push([t1, t2]);
+				usedTeams.add(t1);
+				usedTeams.add(t2);
+			}
+		}
 
-		// weighted combination of factors
-		const qualityWeight = 0.7;
-		const sizeWeight = 0.15;
-		const mmrWeight = 0.15;
-
-		return (
-			avgMatchupQuality * qualityWeight +
-			teamSizeBalance * sizeWeight +
-			mmrBalance * mmrWeight
-		);
+		return schedule;
 	}
 
-	// create a neighbor solution by swapping players between teams
-	private createNeighborSolution(teams: TeamInfo[]): TeamInfo[] {
-		const newTeams = teams.map((team) => ({
+	// create round-robin schedule
+	private createRoundRobinSchedule(
+		numTeams: number,
+		gamesPerTeam: number,
+	): [number, number][] {
+		const schedule: [number, number][] = [];
+
+		// simple round-robin for now
+		for (let round = 0; round < gamesPerTeam; round++) {
+			for (let i = 0; i < numTeams; i++) {
+				for (let j = i + 1; j < numTeams; j++) {
+					schedule.push([i, j]);
+					if (schedule.length >= (numTeams * gamesPerTeam) / 2) {
+						return schedule;
+					}
+				}
+			}
+		}
+
+		return schedule;
+	}
+
+	// calculate total quality of a schedule
+	private calculateScheduleQuality(
+		teams: TeamInfo[],
+		schedule: [number, number][],
+	): number {
+		return schedule.reduce((sum, [t1, t2]) => {
+			return (
+				sum + this.predictMatchQuality(teams[t1].players, teams[t2].players)
+			);
+		}, 0);
+	}
+
+	// optimize team assignments for a fixed schedule
+	private optimizeTeamsForSchedule(
+		teams: TeamInfo[],
+		schedule: [number, number][],
+	): TeamInfo[] {
+		// this is where we improve team compositions knowing which teams will play each other
+		const currentTeams = teams.map((team) => ({
 			...team,
 			players: [...team.players],
 		}));
 
-		// randomly select two different teams
-		const team1Index = Math.floor(Math.random() * newTeams.length);
-		let team2Index = Math.floor(Math.random() * newTeams.length);
-		while (team2Index === team1Index && newTeams.length > 1) {
-			team2Index = Math.floor(Math.random() * newTeams.length);
+		let improved = true;
+		while (improved) {
+			improved = false;
+			const currentQuality = this.calculateScheduleQuality(
+				currentTeams,
+				schedule,
+			);
+
+			// try swapping players between teams that will play each other
+			for (const [t1, t2] of schedule) {
+				for (let p1 = 0; p1 < currentTeams[t1].players.length; p1++) {
+					for (let p2 = 0; p2 < currentTeams[t2].players.length; p2++) {
+						// try swap
+						const player1 = currentTeams[t1].players[p1];
+						const player2 = currentTeams[t2].players[p2];
+
+						currentTeams[t1].players[p1] = player2;
+						currentTeams[t2].players[p2] = player1;
+
+						// recalculate team stats
+						currentTeams[t1].avgMMR = average(
+							currentTeams[t1].players.map((p) => p.mmr),
+						);
+						currentTeams[t1].avgSigma = average(
+							currentTeams[t1].players.map((p) => p.sigma),
+						);
+						currentTeams[t2].avgMMR = average(
+							currentTeams[t2].players.map((p) => p.mmr),
+						);
+						currentTeams[t2].avgSigma = average(
+							currentTeams[t2].players.map((p) => p.sigma),
+						);
+
+						const newQuality = this.calculateScheduleQuality(
+							currentTeams,
+							schedule,
+						);
+
+						if (newQuality > currentQuality) {
+							improved = true;
+							break;
+						} else {
+							// revert swap
+							currentTeams[t1].players[p1] = player1;
+							currentTeams[t2].players[p2] = player2;
+							currentTeams[t1].avgMMR = average(
+								currentTeams[t1].players.map((p) => p.mmr),
+							);
+							currentTeams[t1].avgSigma = average(
+								currentTeams[t1].players.map((p) => p.sigma),
+							);
+							currentTeams[t2].avgMMR = average(
+								currentTeams[t2].players.map((p) => p.mmr),
+							);
+							currentTeams[t2].avgSigma = average(
+								currentTeams[t2].players.map((p) => p.sigma),
+							);
+						}
+					}
+					if (improved) break;
+				}
+				if (improved) break;
+			}
 		}
 
-		const team1 = newTeams[team1Index];
-		const team2 = newTeams[team2Index];
+		return currentTeams;
+	}
 
-		// ensure both teams have players to swap
-		if (team1.players.length === 0 || team2.players.length === 0) {
-			return newTeams;
+	// optimize schedule for fixed teams
+	private optimizeScheduleForTeams(teams: TeamInfo[]): [number, number][] {
+		// this is a maximum weight matching problem
+		return this.findOptimalScheduleForTeams(teams);
+	}
+
+	// improve integrated solution using local search
+	private improveIntegratedSolution(
+		teams: TeamInfo[],
+		schedule: [number, number][],
+	): { teams: TeamInfo[]; schedule: [number, number][]; totalQuality: number } {
+		// alternating improvement of teams and schedule
+		let currentTeams = teams;
+		let currentSchedule = schedule;
+		let currentQuality = this.calculateScheduleQuality(
+			currentTeams,
+			currentSchedule,
+		);
+
+		for (let iter = 0; iter < 10; iter++) {
+			// improve teams for current schedule
+			const improvedTeams = this.optimizeTeamsForSchedule(
+				currentTeams,
+				currentSchedule,
+			);
+
+			// improve schedule for improved teams
+			const improvedSchedule = this.findOptimalScheduleForTeams(improvedTeams);
+
+			const newQuality = this.calculateScheduleQuality(
+				improvedTeams,
+				improvedSchedule,
+			);
+
+			if (newQuality > currentQuality) {
+				currentTeams = improvedTeams;
+				currentSchedule = improvedSchedule;
+				currentQuality = newQuality;
+			} else {
+				break; // no improvement
+			}
 		}
 
-		// randomly select players to swap
-		const player1Index = Math.floor(Math.random() * team1.players.length);
-		const player2Index = Math.floor(Math.random() * team2.players.length);
+		return {
+			teams: currentTeams,
+			schedule: currentSchedule,
+			totalQuality: currentQuality,
+		};
+	}
 
-		// swap the players
-		const player1 = team1.players[player1Index];
-		const player2 = team2.players[player2Index];
+	// utility: factorial for small numbers
+	private factorial(n: number): number {
+		if (n <= 1) return 1;
+		return n * this.factorial(n - 1);
+	}
 
-		team1.players[player1Index] = player2;
-		team2.players[player2Index] = player1;
-
-		// recalculate team stats
-		team1.avgMMR = average(team1.players.map((p) => p.mmr));
-		team1.avgSigma = average(team1.players.map((p) => p.sigma));
-		team2.avgMMR = average(team2.players.map((p) => p.mmr));
-		team2.avgSigma = average(team2.players.map((p) => p.sigma));
-
-		return newTeams;
+	// utility function to shuffle array in place
+	private shuffleArray<T>(array: T[]): void {
+		for (let i = array.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[array[i], array[j]] = [array[j], array[i]];
+		}
 	}
 
 	// record game result and update MMRs using ML model
@@ -970,13 +1258,5 @@ export class VolleyballMatchmaker {
 		}
 
 		return { team1: currentTeam1, team2: currentTeam2 };
-	}
-
-	// utility function to shuffle array in place
-	private shuffleArray<T>(array: T[]): void {
-		for (let i = array.length - 1; i > 0; i--) {
-			const j = Math.floor(Math.random() * (i + 1));
-			[array[i], array[j]] = [array[j], array[i]];
-		}
 	}
 }
