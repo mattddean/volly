@@ -161,6 +161,7 @@ export class MMRModel {
 			);
 
 			// train the model
+			// TODO: where do we store this history?
 			const history = await this.model.fit(inputs, outputs, {
 				epochs,
 				batchSize: 32,
