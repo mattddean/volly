@@ -10,7 +10,7 @@ import {
   type ExpressionBuilder,
   type PermissionsConfig,
   type Row,
-} from '@rocicorp/zero'
+} from '@rocicorp/zero';
 
 export const user = table('user')
   .columns({
@@ -23,7 +23,7 @@ export const user = table('user')
     updatedAt: number(),
     createdAt: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const message = table('message')
   .columns({
@@ -33,7 +33,7 @@ export const message = table('message')
     createdAt: number(),
     updatedAt: number().optional(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 const messageRelationships = relationships(message, ({ one }) => ({
   sender: one({
@@ -41,37 +41,38 @@ const messageRelationships = relationships(message, ({ one }) => ({
     destField: ['id'],
     destSchema: user,
   }),
-}))
+}));
 
 export const schema = createSchema({
   tables: [user, message],
   relationships: [messageRelationships],
-})
+});
 
-export type Schema = typeof schema
-export type Message = Row<Schema['tables']['message']>
-export type User = Row<Schema['tables']['user']>
+export type Schema = typeof schema;
+export type Message = Row<Schema['tables']['message']>;
+export type User = Row<Schema['tables']['user']>;
 
 // The contents of your decoded JWT.
 type AuthData = {
-  sub: string | null
-}
+  sub: string | null;
+};
 
 export const permissions = definePermissions<AuthData, Schema>(schema, () => {
   const allowIfLoggedIn = (
     authData: AuthData,
-    { cmpLit }: ExpressionBuilder<Schema, keyof Schema['tables']>
-  ) => cmpLit(authData.sub, 'IS NOT', null)
+    { cmpLit }: ExpressionBuilder<Schema, keyof Schema['tables']>,
+  ) => cmpLit(authData.sub, 'IS NOT', null);
 
   const allowIfIsMessageSender = (
     authData: AuthData,
-    { cmp }: ExpressionBuilder<Schema, 'message'>
-  ) => cmp('senderId', '=', authData.sub ?? '')
+    { cmp }: ExpressionBuilder<Schema, 'message'>,
+  ) => cmp('senderId', '=', authData.sub ?? '');
 
   const allowIfMessageSenderIsSelf = (
     authData: AuthData,
-    { or, cmp }: ExpressionBuilder<Schema, 'message'>
-  ) => or(cmp('senderId', 'IS', null), cmp('senderId', '=', authData.sub ?? ''))
+    { or, cmp }: ExpressionBuilder<Schema, 'message'>,
+  ) =>
+    or(cmp('senderId', 'IS', null), cmp('senderId', '=', authData.sub ?? ''));
 
   return {
     user: {
@@ -95,5 +96,5 @@ export const permissions = definePermissions<AuthData, Schema>(schema, () => {
         select: ANYONE_CAN,
       },
     },
-  } satisfies PermissionsConfig<AuthData, Schema>
-})
+  } satisfies PermissionsConfig<AuthData, Schema>;
+});
