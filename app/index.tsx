@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState } from "react";
 import {
   Button,
   H1,
@@ -9,20 +9,20 @@ import {
   SizableText,
   XStack,
   YStack,
-} from 'tamagui'
-import { authClient, useAuth } from '~/better-auth/authClient'
-import { isTauri } from '~/tauri/constants'
-import { Avatar } from '~/interface/Avatar'
-import { useQuery, zero } from '~/zero/zero'
-import { randomID } from '~/zero/randomId'
+} from "tamagui";
+import { authClient, useAuth } from "~/better-auth/authClient";
+import { isTauri } from "~/tauri/constants";
+import { Avatar } from "~/interface/Avatar";
+import { useQuery, zero } from "~/zero/zero";
+import { randomID } from "~/zero/randomId";
 
 export default function HomePage() {
-  const { user, token, session } = useAuth()
-  const [text, setText] = useState('')
+  const { user, token, session } = useAuth();
+  const [text, setText] = useState("");
 
   const [messages] = useQuery((q) =>
-    q.message.related('sender').orderBy('createdAt', 'desc')
-  )
+    q.message.related("sender").orderBy("createdAt", "desc")
+  );
 
   const handleSubmit = useCallback(async () => {
     zero.mutate.message.insert({
@@ -30,8 +30,8 @@ export default function HomePage() {
       senderId: user?.id,
       content: text,
       createdAt: new Date().getTime(),
-    })
-  }, [user, text])
+    });
+  }, [user, text]);
 
   return (
     <YStack
@@ -42,13 +42,13 @@ export default function HomePage() {
       maxW={600}
       width="100%"
       self="center"
-      $platform-ios={{ pt: '$10' }}
+      $platform-ios={{ pt: "$10" }}
     >
       <H1>Welcome</H1>
 
       {user ? (
         <XStack items="center" gap="$4">
-          <Avatar image={user.image || ''} />
+          <Avatar image={user.image || ""} />
           <SizableText>{user.name}</SizableText>
 
           <Button onPress={() => authClient.signOut()}>Logout</Button>
@@ -63,8 +63,8 @@ export default function HomePage() {
         <Button
           onPress={() => {
             authClient.signIn.social({
-              provider: 'github',
-            })
+              provider: "github",
+            });
           }}
         >
           Login with Github
@@ -83,20 +83,20 @@ export default function HomePage() {
         <Button onPress={handleSubmit}>Post</Button>
       </YStack>
 
-      <H3>Messages</H3>
+      <div className="text-2xl text-red-500">Messages</div>
 
       {messages.map((message) => {
         return (
           <XStack key={message.id}>
             <Paragraph>
               <SizableText fontWeight="700">
-                {message.sender ? message.sender.name : 'Anonymous'}
+                {message.sender ? message.sender.name : "Anonymous"}
               </SizableText>
               : {message.content}
             </Paragraph>
           </XStack>
-        )
+        );
       })}
     </YStack>
-  )
+  );
 }
