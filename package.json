@@ -3,6 +3,7 @@
   "version": "1.1.479",
   "private": true,
   "type": "module",
+  "packageManager": "yarn@1.22.18",
   "scripts": {
     "build:web": "one build",
     "data:reset": "docker compose down --volumes; rm /tmp/onezero_replica.db",
@@ -20,7 +21,7 @@
     "typecheck": "tsc --noEmit",
     "zero": "zero-cache-dev -p ./src/zero/schema.ts",
     "zero-gen": "drizzle-zero generate --schema src/db/schema-with-relations.ts --tsconfig tsconfig.json --output src/zero/schema.gen.ts",
-    "postinstall": "pnpm zero-gen",
+    "postinstall": "yarn zero-gen",
     "auth-gen": "pnpx @better-auth/cli generate --config src/better-auth/auth.ts --output src/db/auth-schema.ts"
   },
   "dependencies": {
