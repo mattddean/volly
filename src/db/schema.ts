@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   boolean,
   date,
@@ -138,15 +139,14 @@ export const users = pgTable('users', {
     .notNull(),
 
   // custom
-  skillGroup: text('skill_group').notNull(),
-  zScore: integer('z_score').notNull(),
-  sigma: integer('sigma').notNull(),
-  /** yyyy-MM-dd */
-  lastPlayedDay: date('last_played_day').notNull(),
-  gamesPlayed: integer('games_played').notNull(),
-  wins: integer('wins').notNull(),
-  pointsScored: integer('points_scored').notNull(),
-  pointsAllowed: integer('points_allowed').notNull(),
+  skillGroup: text('skill_group').notNull().default('D'),
+  zScore: integer('z_score').notNull().default(0),
+  sigma: integer('sigma').notNull().default(0),
+  lastPlayedDay: date('last_played_day').notNull().default(sql`CURRENT_DATE`),
+  gamesPlayed: integer('games_played').notNull().default(0),
+  wins: integer('wins').notNull().default(0),
+  pointsScored: integer('points_scored').notNull().default(0),
+  pointsAllowed: integer('points_allowed').notNull().default(0),
 });
 
 export const sessions = pgTable('sessions', {
