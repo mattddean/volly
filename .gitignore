@@ -34,3 +34,6 @@ tsconfig.tsbuildinfo
 # generated code
 /ios
 /android
+
+# zero schema
+src/zero/schema.ts
