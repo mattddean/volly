@@ -19,7 +19,7 @@
     "seed": "tsx ./src/postgres/seed.ts",
     "typecheck": "tsc --noEmit",
     "zero": "zero-cache-dev -p ./src/zero/schema.ts",
-    "generate": "drizzle-zero generate --format --output src/db/zero-schema.gen.ts",
+    "generate": "drizzle-zero generate --format --output src/zero/schema.ts",
     "postinstall": "pnpm generate"
   },
   "dependencies": {
