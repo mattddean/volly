@@ -1,20 +1,21 @@
-import { relations } from "drizzle-orm";
+import { relations } from 'drizzle-orm';
 
 import {
   checkinsTable,
   gamesTable,
   matchupsTable,
+  messagesTable,
   teamsTable,
   teamsUsersTable,
   tournamentsTable,
   usersTable,
-} from "./schema";
+} from './schema';
 
 export const gamesRelations = relations(gamesTable, ({ one }) => ({
   matchup: one(matchupsTable, {
     fields: [gamesTable.matchupId],
     references: [matchupsTable.id],
-    relationName: "matchupsGames",
+    relationName: 'matchupsGames',
   }),
 }));
 
@@ -22,26 +23,26 @@ export const matchupsRelations = relations(matchupsTable, ({ one }) => ({
   games: one(gamesTable, {
     fields: [matchupsTable.id],
     references: [gamesTable.matchupId],
-    relationName: "matchupsGames",
+    relationName: 'matchupsGames',
   }),
   team1: one(teamsTable, {
     fields: [matchupsTable.team1Id],
     references: [teamsTable.id],
-    relationName: "teamsMatchups1",
+    relationName: 'teamsMatchups1',
   }),
   team2: one(teamsTable, {
     fields: [matchupsTable.team2Id],
     references: [teamsTable.id],
-    relationName: "teamsMatchups2",
+    relationName: 'teamsMatchups2',
   }),
 }));
 
 export const teamsRelations = relations(teamsTable, ({ many }) => ({
   matchups1: many(matchupsTable, {
-    relationName: "teamsMatchups1",
+    relationName: 'teamsMatchups1',
   }),
   matchups2: many(matchupsTable, {
-    relationName: "teamsMatchups2",
+    relationName: 'teamsMatchups2',
   }),
   users: many(teamsUsersTable),
 }));
@@ -70,4 +71,11 @@ export const checkinsRelations = relations(checkinsTable, ({ one }) => ({
 
 export const tournamentsRelations = relations(tournamentsTable, ({ many }) => ({
   checkins: many(checkinsTable),
+}));
+
+export const messagesRelations = relations(messagesTable, ({ one }) => ({
+  sender: one(usersTable, {
+    fields: [messagesTable.senderId],
+    references: [usersTable.id],
+  }),
 }));

@@ -36,4 +36,4 @@ tsconfig.tsbuildinfo
 /android
 
 # zero schema
-src/zero/schema.ts
+src/zero/schema.gen.ts

@@ -1,11 +1,11 @@
 import {
-  bigint,
   date,
   integer,
   pgTable,
   text,
   timestamp,
   unique,
+  varchar,
 } from 'drizzle-orm/pg-core';
 import { ulid } from '~/db/ulid';
 
@@ -21,9 +21,6 @@ export const usersTable = pgTable('users', {
   wins: integer('wins').notNull(),
   pointsScored: integer('points_scored').notNull(),
   pointsAllowed: integer('points_allowed').notNull(),
-
-  // echo
-  version: bigint('version', { mode: 'number' }).notNull().default(0),
 });
 
 export const userChemistriesTable = pgTable('user_chemistries', {
@@ -35,18 +32,12 @@ export const userChemistriesTable = pgTable('user_chemistries', {
     .notNull()
     .references(() => usersTable.id),
   chemistry: text('chemistry').notNull(),
-
-  // echo
-  version: bigint('version', { mode: 'number' }).notNull().default(0),
 });
 
 export const tournamentsTable = pgTable('tournaments', {
   id: text('id').primaryKey().$defaultFn(ulid),
   name: text('name').notNull(),
   day: date('day'),
-
-  // echo
-  version: bigint('version', { mode: 'number' }).notNull().default(0),
 });
 
 export const teamsTable = pgTable('teams', {
@@ -58,10 +49,6 @@ export const teamsTable = pgTable('teams', {
   avgZScore: integer('avg_z_score'),
   normalizedAvgZScore: integer('normalized_avg_z_score'),
   chemistry: integer('chemistry'),
-
-  // echo
-  version: bigint('version', { mode: 'number' }).notNull().default(0),
-  deletedAt: timestamp('deleted_at'),
 });
 
 export const checkinsTable = pgTable(
@@ -75,9 +62,6 @@ export const checkinsTable = pgTable(
       .notNull()
       .references(() => tournamentsTable.id),
     checkedOutAt: timestamp('checked_out_at'),
-
-    // echo
-    version: bigint('version', { mode: 'number' }).notNull().default(0),
   },
   (t) => [unique().on(t.tournamentId, t.userId)],
 );
@@ -97,9 +81,6 @@ export const teamsUsersTable = pgTable(
     tournamentId: text('tournament_id')
       .notNull()
       .references(() => tournamentsTable.id),
-
-    // echo
-    version: bigint('version', { mode: 'number' }).notNull().default(0),
   },
   (t) => [
     unique().on(t.teamId, t.userId),
@@ -123,9 +104,6 @@ export const matchupsTable = pgTable('matchups', {
     .notNull()
     .references(() => tournamentsTable.id),
   roundNumber: integer('round_number').notNull(),
-
-  // echo
-  version: bigint('version', { mode: 'number' }).notNull().default(0),
 });
 
 export const gamesTable = pgTable('games', {
@@ -145,9 +123,14 @@ export const gamesTable = pgTable('games', {
   tournamentId: text('tournament_id')
     .notNull()
     .references(() => tournamentsTable.id),
+});
 
-  // echo
-  version: bigint('version', { mode: 'number' }).notNull().default(0),
+export const messagesTable = pgTable('messages', {
+  id: varchar('id').primaryKey().$defaultFn(ulid),
+  senderId: varchar('sender_id').references(() => usersTable.id),
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 export type InsertUser = typeof usersTable.$inferInsert;

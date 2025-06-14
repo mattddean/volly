@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": ["src/zero/schema.ts"]
+    "ignore": ["src/zero/schema.gen.ts"]
   },
   "formatter": {
     "enabled": true,

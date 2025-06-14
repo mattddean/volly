@@ -21,11 +21,11 @@ export default function HomePage() {
   const [text, setText] = useState('');
 
   const [messages] = useQuery((q) =>
-    q.message.related('sender').orderBy('createdAt', 'desc'),
+    q.messagesTable.related('sender').orderBy('createdAt', 'desc'),
   );
 
   const handleSubmit = useCallback(async () => {
-    zero.mutate.message.insert({
+    zero.mutate.messagesTable.insert({
       id: randomID(),
       senderId: user?.id,
       content: text,
