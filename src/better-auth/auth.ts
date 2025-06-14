@@ -1,10 +1,12 @@
-import { betterAuth } from 'better-auth'
-import { bearer, jwt } from 'better-auth/plugins'
-import * as PG from 'pg'
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { bearer, jwt } from 'better-auth/plugins';
+import { db } from '~/db';
 
 export const auth = betterAuth({
-  database: new PG.Pool({
-    connectionString: process.env.ZERO_UPSTREAM_DB,
+  database: drizzleAdapter(db, {
+    provider: 'pg',
+    usePlural: true,
   }),
 
   plugins: [
@@ -28,4 +30,4 @@ export const auth = betterAuth({
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
     },
   },
-})
+});

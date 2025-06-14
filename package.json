@@ -20,7 +20,8 @@
     "typecheck": "tsc --noEmit",
     "zero": "zero-cache-dev -p ./src/zero/schema.ts",
     "zero-gen": "drizzle-zero generate --schema src/db/schema-with-relations.ts --tsconfig tsconfig.json --output src/zero/schema.gen.ts",
-    "postinstall": "pnpm zero-gen"
+    "postinstall": "pnpm zero-gen",
+    "auth-gen": "pnpx @better-auth/cli generate --config src/better-auth/auth.ts --output src/db/auth-schema.ts"
   },
   "dependencies": {
     "@rocicorp/zero": "^0.20.2025052100",

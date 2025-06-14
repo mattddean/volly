@@ -9,8 +9,8 @@ import {
 
 export { schema, type Schema };
 
-export type Message = Row<Schema['tables']['messagesTable']>;
-export type User = Row<Schema['tables']['usersTable']>;
+export type Message = Row<Schema['tables']['messages']>;
+export type User = Row<Schema['tables']['users']>;
 
 // The contents of your decoded JWT.
 type AuthData = {
@@ -25,22 +25,22 @@ export const permissions = definePermissions<AuthData, Schema>(schema, () => {
 
   const allowIfIsMessageSender = (
     authData: AuthData,
-    { cmp }: ExpressionBuilder<Schema, 'messagesTable'>,
+    { cmp }: ExpressionBuilder<Schema, 'messages'>,
   ) => cmp('senderId', '=', authData.sub ?? '');
 
   const allowIfMessageSenderIsSelf = (
     authData: AuthData,
-    { or, cmp }: ExpressionBuilder<Schema, 'messagesTable'>,
+    { or, cmp }: ExpressionBuilder<Schema, 'messages'>,
   ) =>
     or(cmp('senderId', 'IS', null), cmp('senderId', '=', authData.sub ?? ''));
 
   return {
-    usersTable: {
+    users: {
       row: {
         select: ANYONE_CAN,
       },
     },
-    messagesTable: {
+    messages: {
       row: {
         // anyone can insert, but the senderId of the message must match the current user
         insert: [allowIfMessageSenderIsSelf],
