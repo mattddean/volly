@@ -34,3 +34,6 @@ tsconfig.tsbuildinfo
 # generated code
 /ios
 /android
+
+# drizzle-zero
+zero-schema.gen.ts

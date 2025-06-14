@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState } from 'react';
 import {
   Button,
   H1,
@@ -9,19 +9,19 @@ import {
   SizableText,
   XStack,
   YStack,
-} from "tamagui";
-import { authClient, useAuth } from "~/better-auth/authClient";
-import { isTauri } from "~/tauri/constants";
-import { Avatar } from "~/interface/Avatar";
-import { useQuery, zero } from "~/zero/zero";
-import { randomID } from "~/zero/randomId";
+} from 'tamagui';
+import { authClient, useAuth } from '~/better-auth/authClient';
+import { isTauri } from '~/tauri/constants';
+import { Avatar } from '~/interface/Avatar';
+import { useQuery, zero } from '~/zero/zero';
+import { randomID } from '~/zero/randomId';
 
 export default function HomePage() {
   const { user, token, session } = useAuth();
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
 
   const [messages] = useQuery((q) =>
-    q.message.related("sender").orderBy("createdAt", "desc")
+    q.message.related('sender').orderBy('createdAt', 'desc'),
   );
 
   const handleSubmit = useCallback(async () => {
@@ -42,13 +42,13 @@ export default function HomePage() {
       maxW={600}
       width="100%"
       self="center"
-      $platform-ios={{ pt: "$10" }}
+      $platform-ios={{ pt: '$10' }}
     >
       <H1>Welcome</H1>
 
       {user ? (
         <XStack items="center" gap="$4">
-          <Avatar image={user.image || ""} />
+          <Avatar image={user.image || ''} />
           <SizableText>{user.name}</SizableText>
 
           <Button onPress={() => authClient.signOut()}>Logout</Button>
@@ -63,7 +63,7 @@ export default function HomePage() {
         <Button
           onPress={() => {
             authClient.signIn.social({
-              provider: "github",
+              provider: 'github',
             });
           }}
         >
@@ -83,14 +83,14 @@ export default function HomePage() {
         <Button onPress={handleSubmit}>Post</Button>
       </YStack>
 
-      <div className="text-2xl text-red-500">Messages</div>
+      <h3 className="text-2xl">Messages</h3>
 
       {messages.map((message) => {
         return (
           <XStack key={message.id}>
             <Paragraph>
               <SizableText fontWeight="700">
-                {message.sender ? message.sender.name : "Anonymous"}
+                {message.sender ? message.sender.name : 'Anonymous'}
               </SizableText>
               : {message.content}
             </Paragraph>
