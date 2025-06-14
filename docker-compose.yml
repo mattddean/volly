@@ -35,7 +35,7 @@ services:
     working_dir: /app
     environment:
       - ZERO_UPSTREAM_DB=${ZERO_UPSTREAM_DB}
-    command: sh -c "bun install && bun drizzle-kit migrate"
+    command: sh -c "bun install && bun run seed.ts"
 
 volumes:
   pgdata:

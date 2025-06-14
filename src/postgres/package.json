@@ -4,6 +4,9 @@
     "pg": "^8.13.1",
     "unicode-emoji": "^2.6.0"
   },
+  "devDependencies": {
+    "drizzle-kit": "0.30.6"
+  },
   "publishConfig": {
     "access": "public"
   }
